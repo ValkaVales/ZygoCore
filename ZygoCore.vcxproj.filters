@@ -1,0 +1,258 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="zygo">
+      <UniqueIdentifier>{fb8af233-bfed-4e4c-801c-a21cd462f853}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\app">
+      <UniqueIdentifier>{070c755a-b3a6-453a-a0c8-37f1c9b34cdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\core">
+      <UniqueIdentifier>{0960bcf9-7436-475c-88ce-a48dc33904da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\core\encoding">
+      <UniqueIdentifier>{2a5327c3-c6e8-4a46-b00f-8da413062a8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\core\io">
+      <UniqueIdentifier>{6e859b56-3846-4000-b598-ad690a8419bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\debug">
+      <UniqueIdentifier>{5e3ea7dc-bf81-4ba3-8529-0925b0a7bc0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\math">
+      <UniqueIdentifier>{523e6ba4-4a3c-4c6f-896c-7e780efe70c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\math\common">
+      <UniqueIdentifier>{e1a40708-3a82-46e1-b589-4f6e7abed58d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\crypto">
+      <UniqueIdentifier>{46a8f1ea-eaf8-450e-a3cf-0d7f6e23cbed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\crypto\aes">
+      <UniqueIdentifier>{8b3be101-9649-4b79-90c1-b620d53e8815}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\crypto\sha">
+      <UniqueIdentifier>{c771f350-61b3-4629-a9f6-5d5a30468130}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\random">
+      <UniqueIdentifier>{0bbd654d-1f42-41a7-aae0-3d0b0bc5c660}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\math\vector">
+      <UniqueIdentifier>{955ad310-bdb4-4e02-bab6-338c9a36d87c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\io_helpers">
+      <UniqueIdentifier>{221744c6-631b-4c65-8580-0eb8025dcd23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\containers">
+      <UniqueIdentifier>{0a0e845c-5061-46d1-9fae-01da3fd4d39d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\zygo\app\sim_clock.cpp">
+      <Filter>zygo\app</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\core\io\byte_reader.cpp">
+      <Filter>zygo\core\io</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\core\io\byte_writer.cpp">
+      <Filter>zygo\core\io</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\core\stopwatch.cpp">
+      <Filter>zygo\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\core\str.cpp">
+      <Filter>zygo\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\crypto\sha\sha160.cpp">
+      <Filter>zygo\crypto\sha</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\crypto\sha\sha256.cpp">
+      <Filter>zygo\crypto\sha</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\crypto\aes\aes128.cpp">
+      <Filter>zygo\crypto\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\random\my_random.cpp">
+      <Filter>zygo\random</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\vector\vec2.cpp">
+      <Filter>zygo\math\vector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\vector\vec2int.cpp">
+      <Filter>zygo\math\vector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\vector\vec2short.cpp">
+      <Filter>zygo\math\vector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\vector\vec3.cpp">
+      <Filter>zygo\math\vector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\vector\vec3int.cpp">
+      <Filter>zygo\math\vector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\vector\vec3short.cpp">
+      <Filter>zygo\math\vector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\vector\vec4.cpp">
+      <Filter>zygo\math\vector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\common\angle.cpp">
+      <Filter>zygo\math\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\common\scalar.cpp">
+      <Filter>zygo\math\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\common\array_funcs.cpp">
+      <Filter>zygo\math\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\debug\vectors_to_string.cpp">
+      <Filter>zygo\debug</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\vector\cross_vectors_funcs.cpp">
+      <Filter>zygo\math\vector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\random\weighted_choice.cpp">
+      <Filter>zygo\random</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\debug\print_array.cpp">
+      <Filter>zygo\debug</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\common\color.cpp">
+      <Filter>zygo\math\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\io_helpers\file_name.cpp">
+      <Filter>zygo\io_helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\core\encoding\hex.cpp">
+      <Filter>zygo\core\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\core\encoding\digit.cpp">
+      <Filter>zygo\core\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\core\encoding\base64.cpp">
+      <Filter>zygo\core\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\containers\circular_buffer.cpp">
+      <Filter>zygo\containers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\containers\minmax.cpp">
+      <Filter>zygo\containers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\core\mem.cpp">
+      <Filter>zygo\core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\zygo\app\sim_clock.h">
+      <Filter>zygo\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\io\byte_reader.h">
+      <Filter>zygo\core\io</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\io\byte_writer.h">
+      <Filter>zygo\core\io</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\encoding\base64.h">
+      <Filter>zygo\core\encoding</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\encoding\digit.h">
+      <Filter>zygo\core\encoding</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\encoding\hex.h">
+      <Filter>zygo\core\encoding</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\assert.h">
+      <Filter>zygo\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\endian.h">
+      <Filter>zygo\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\mem.h">
+      <Filter>zygo\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\stopwatch.h">
+      <Filter>zygo\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\str.h">
+      <Filter>zygo\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\core\types.h">
+      <Filter>zygo\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\debug\print_array.h">
+      <Filter>zygo\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\common\array_funcs.h">
+      <Filter>zygo\math\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\debug\useful_macros.h">
+      <Filter>zygo\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\common\consts.h">
+      <Filter>zygo\math\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\crypto\sha\sha160.h">
+      <Filter>zygo\crypto\sha</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\crypto\sha\sha256.h">
+      <Filter>zygo\crypto\sha</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\crypto\aes\aes128.h">
+      <Filter>zygo\crypto\aes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\random\my_random.h">
+      <Filter>zygo\random</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\random\weighted_choice.h">
+      <Filter>zygo\random</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\vector\vec2.h">
+      <Filter>zygo\math\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\vector\vec2int.h">
+      <Filter>zygo\math\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\vector\vec2short.h">
+      <Filter>zygo\math\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\vector\vec3.h">
+      <Filter>zygo\math\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\vector\vec3int.h">
+      <Filter>zygo\math\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\vector\vec3short.h">
+      <Filter>zygo\math\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\vector\vec4.h">
+      <Filter>zygo\math\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\common\angle.h">
+      <Filter>zygo\math\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\common\scalar.h">
+      <Filter>zygo\math\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\io_helpers\vectors_serialize.h">
+      <Filter>zygo\io_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\debug\vectors_to_string.h">
+      <Filter>zygo\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\vector\cross_vectors_funcs.h">
+      <Filter>zygo\math\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\common\color.h">
+      <Filter>zygo\math\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\io_helpers\file_name.h">
+      <Filter>zygo\io_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\containers\circular_buffer.h">
+      <Filter>zygo\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\containers\minmax.h">
+      <Filter>zygo\containers</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
