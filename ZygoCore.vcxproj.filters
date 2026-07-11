@@ -243,6 +243,9 @@
     <ClCompile Include="src\zygo\debug\print_matrix.cpp">
       <Filter>zygo\debug</Filter>
     </ClCompile>
+    <ClCompile Include="src\zygo\io_helpers\matrix_serialize.cpp">
+      <Filter>zygo\io_helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zygo\app\sim_clock.h">

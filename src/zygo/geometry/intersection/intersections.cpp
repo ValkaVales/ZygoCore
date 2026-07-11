@@ -162,7 +162,7 @@ IntersectionType Intersections::genericIntersection_helper
 
 bool Intersections::intersectionSegSeg( Segment2 const & s1, Segment2 const & s2, Real eps )
 {
-  return IntersectionType::disjoint != genericIntersection( s1, s2, NULL, NULL, eps );
+  return IntersectionType::disjoint != genericIntersection( s1, s2, nullptr, nullptr, eps );
 }
 
 bool Intersections::rightTurn( Vector2 const & a, Vector2 const & b, Vector2 const & c )

@@ -32,10 +32,7 @@ Matrix Matrix::expandMatrix( int col_indices[], int row_indices[], int new_dimy,
   ZgAssert( new_dimx > dimx && new_dimy > dimy );
 
   Matrix res( new_dimy, new_dimx );
-
-#ifndef DEBUG_MATRIX
-  res.makeAllZero(); // call this only in Release, because in case of DEBUG_MATRIX, all its values already are zero
-#endif
+  res.makeAllZero();
 
   for ( int i = 0; i < dimx; ++i )
   {

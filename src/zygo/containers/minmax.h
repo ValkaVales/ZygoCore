@@ -11,7 +11,7 @@ struct MinMax
   Real max;
 
   MinMax();
-  MinMax( Real min, Real max = -REAL_BIG_VALUE );
+  explicit MinMax( Real min, Real max = -REAL_BIG_VALUE );
 
   void upd( Real val );
   void upd( MinMax val );

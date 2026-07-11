@@ -35,7 +35,7 @@ private:
 #endif
 
 public:
-  Matrix( int dimy, int dimx, char const * name = NULL );
+  Matrix( int dimy, int dimx, char const * name = nullptr );
   Matrix( Matrix const & other );
   ~Matrix();
 

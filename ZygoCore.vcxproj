@@ -160,6 +160,7 @@
     <ClCompile Include="src\zygo\geometry\segment\segment2.cpp" />
     <ClCompile Include="src\zygo\geometry\segment\segment3.cpp" />
     <ClCompile Include="src\zygo\io_helpers\file_name.cpp" />
+    <ClCompile Include="src\zygo\io_helpers\matrix_serialize.cpp" />
     <ClCompile Include="src\zygo\math\bigint\big_int.cpp" />
     <ClCompile Include="src\zygo\math\bigint\big_int3.cpp" />
     <ClCompile Include="src\zygo\math\bigint\big_int_32.cpp" />

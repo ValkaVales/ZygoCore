@@ -13,13 +13,13 @@ Matrix::Matrix( int dimy, int dimx, char const * name )
 #ifdef DEBUG_MATRIX
   , name  ( name )
 #else
-  , m     ( NULL )
+  , m     ( nullptr )
 #endif
 {
   ZgAssert( dimx >= 1 && dimy >= 1 );
 
 #ifdef DEBUG_MATRIX
-  m.assign( size, REAL_ZERO );
+  //m.assign( size, REAL_ZERO );
 #else
   m = new Real[size];
   (void)name;
@@ -31,9 +31,9 @@ Matrix::Matrix( Matrix const& other )
   , dimx  ( other.dimx )
   , size  ( other.size )
 #ifdef DEBUG_MATRIX
-  , name  ( NULL )
+  , name  ( nullptr )
 #else
-  , m     ( NULL )
+  , m     ( nullptr )
 #endif
 {
 #ifdef DEBUG_MATRIX
@@ -67,7 +67,7 @@ Matrix::Matrix( Matrix&& other ) noexcept
   , size ( other.size )
   , m    ( std::move( other.m ) )
 #ifdef DEBUG_MATRIX
-  , name ( NULL )
+  , name ( nullptr )
 #endif
 {
   other.nullify();

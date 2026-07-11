@@ -21,8 +21,8 @@ public:
   (
     Segment2 const & s1,
     Segment2 const & s2,
-    Vector2 * out1 = NULL,
-    Vector2 * out2 = NULL,
+    Vector2 * out1 = nullptr,
+    Vector2 * out2 = nullptr,
     Real eps = EPSILON
   );
 
@@ -32,8 +32,8 @@ private:
   (
     Segment2 const & s1,
     Segment2 const & s2,
-    Vector2 * out1 = NULL,
-    Vector2 * out2 = NULL,
+    Vector2 * out1 = nullptr,
+    Vector2 * out2 = nullptr,
     Real eps = EPSILON
   );
 

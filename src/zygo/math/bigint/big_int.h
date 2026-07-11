@@ -46,8 +46,8 @@ public:
   void set( char const * s, int radix );
   void copyFrom( BigInt const& a );
 
-  void print( int radix, char const * name = NULL );
-  void printRaw( char const * name = NULL );
+  void print( int radix, char const * name = nullptr );
+  void printRaw( char const * name = nullptr );
 
   inline void inc() { add( 1 ); }
   inline void dec() { sub( 1 ); }
