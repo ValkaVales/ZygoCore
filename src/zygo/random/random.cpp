@@ -1,13 +1,13 @@
-#include "my_random.h"
+#include "random.h"
 #include <zygo/math/common/scalar.h>
 
 
 namespace zygo {
 
-u64 MyRandom::s[4] = { 0x9E3779B97F4A7C15ULL, 0xBF58476D1CE4E5B9ULL, 0x94D049BB133111EBULL, 0x2545F4914F6CDD1DULL };
+u64 Random::s[4] = { 0x9E3779B97F4A7C15ULL, 0xBF58476D1CE4E5B9ULL, 0x94D049BB133111EBULL, 0x2545F4914F6CDD1DULL };
 
-bool   MyRandom::has_gauss_next = false;
-Real MyRandom::gauss_next = REAL_ZERO;
+bool   Random::has_gauss_next = false;
+Real Random::gauss_next = REAL_ZERO;
 
 
 // splitmix64 — стандартный способ развернуть один сид в полное состояние
@@ -19,7 +19,7 @@ static u64 splitmix64( u64& x )
   return z ^ (z >> 31);
 }
 
-void MyRandom::seed( u64 v )
+void Random::seed( u64 v )
 {
   for ( int i = 0; i < 4; ++i )
     s[i] = splitmix64( v );
@@ -30,7 +30,7 @@ void MyRandom::seed( u64 v )
 
 
 // полярный метод Марсальи: гауссиана без sin/cos, оба значения в дело
-Real MyRandom::gauss( Real mean, Real sigma )
+Real Random::gauss( Real mean, Real sigma )
 {
   if ( sigma <= REAL_ZERO )
     return mean;
@@ -57,7 +57,7 @@ Real MyRandom::gauss( Real mean, Real sigma )
   return mean + sigma * u * k;
 }
 
-Real MyRandom::oldGauss( Real mean, Real sigma )
+Real Random::oldGauss( Real mean, Real sigma )
 {
   if ( le( sigma, REAL_ZERO, SMALL_EPSILON ) )
     return mean;
@@ -82,7 +82,7 @@ Real MyRandom::oldGauss( Real mean, Real sigma )
   return x1;
 }
 
-Vector3 MyRandom::gauss( Vector3 const& mean, Real sigma )
+Vector3 Random::gauss( Vector3 const& mean, Real sigma )
 {
   return Vector3(
     gauss( mean.getX(), sigma ),

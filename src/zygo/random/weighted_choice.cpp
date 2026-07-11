@@ -1,5 +1,5 @@
 #include "weighted_choice.h"
-#include "my_random.h"
+#include "random.h"
 #include <zygo/core/assert.h>
 
 
@@ -25,7 +25,7 @@ int getRandomIndex_BasedOnProbabilities( Real const* weights, int size ) // weig
 
   ZgAssert( sum > 0 );
 
-  Real d = MyRandom::rand( REAL_ZERO, sum );
+  Real d = Random::rand( REAL_ZERO, sum );
 
   int res = 0;
   p = weights;

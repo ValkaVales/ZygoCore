@@ -6,7 +6,7 @@
 
 namespace zygo {
 
-class MyRandom // NOT multi-threaded
+class Random // NOT multi-threaded
 {
 private:
   static u64 s[4];

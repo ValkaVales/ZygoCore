@@ -46,6 +46,36 @@
     <Filter Include="zygo\containers">
       <UniqueIdentifier>{0a0e845c-5061-46d1-9fae-01da3fd4d39d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="zygo\math\matrix">
+      <UniqueIdentifier>{38ef65c7-d42a-43d1-aae2-834e059423d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\math\matrix\small_fast_matrix">
+      <UniqueIdentifier>{265e4973-7f23-4272-b071-f2240ebb9b4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\geometry">
+      <UniqueIdentifier>{9be8f311-f205-4b2f-9bc9-1f74ee004df3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\geometry\intersection">
+      <UniqueIdentifier>{4b666ad4-fcfa-470f-8350-c3bab520b380}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\geometry\segment">
+      <UniqueIdentifier>{900856af-0c03-4c22-b35f-f9481d28471d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\geometry\primitive">
+      <UniqueIdentifier>{5a270feb-4e47-43f6-b354-5631655d7708}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\control">
+      <UniqueIdentifier>{35fbdfae-c56f-407e-83ca-e0ae2e8ed5c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\control\pid">
+      <UniqueIdentifier>{ce82f572-03bb-4cef-9243-8831b7aaee49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\math\quaternion">
+      <UniqueIdentifier>{93269c0e-f559-4a92-a3fe-2e9c6304208b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\math\bigint">
+      <UniqueIdentifier>{f603be4d-467b-44f1-ace6-880261ff0d33}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\zygo\app\sim_clock.cpp">
@@ -72,7 +102,7 @@
     <ClCompile Include="src\zygo\crypto\aes\aes128.cpp">
       <Filter>zygo\crypto\aes</Filter>
     </ClCompile>
-    <ClCompile Include="src\zygo\random\my_random.cpp">
+    <ClCompile Include="src\zygo\random\random.cpp">
       <Filter>zygo\random</Filter>
     </ClCompile>
     <ClCompile Include="src\zygo\math\vector\vec2.cpp">
@@ -141,6 +171,78 @@
     <ClCompile Include="src\zygo\core\mem.cpp">
       <Filter>zygo\core</Filter>
     </ClCompile>
+    <ClCompile Include="src\zygo\math\matrix\matrix.cpp">
+      <Filter>zygo\math\matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\matrix\matrix_inverse.cpp">
+      <Filter>zygo\math\matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\matrix\matrix_multiplication.cpp">
+      <Filter>zygo\math\matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\matrix\matrix_multiplication_parallel.cpp">
+      <Filter>zygo\math\matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\matrix\matrix_random.cpp">
+      <Filter>zygo\math\matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\matrix\matrix_solve.cpp">
+      <Filter>zygo\math\matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\matrix\matrix_spd_cholesky.cpp">
+      <Filter>zygo\math\matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\matrix\matrix_sub_expand.cpp">
+      <Filter>zygo\math\matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\matrix\matrix_debug.cpp">
+      <Filter>zygo\math\matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\geometry\intersection\intersections.cpp">
+      <Filter>zygo\geometry\intersection</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\geometry\segment\segment2.cpp">
+      <Filter>zygo\geometry\segment</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\geometry\segment\segment3.cpp">
+      <Filter>zygo\geometry\segment</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\control\pid\pid.cpp">
+      <Filter>zygo\control\pid</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\quaternion\quaternion.cpp">
+      <Filter>zygo\math\quaternion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\quaternion\quaternion_euler.cpp">
+      <Filter>zygo\math\quaternion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\quaternion\quaternion_imu.cpp">
+      <Filter>zygo\math\quaternion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\quaternion\quaternion_interpolations.cpp">
+      <Filter>zygo\math\quaternion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\quaternion\quaternion_matrix.cpp">
+      <Filter>zygo\math\quaternion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\quaternion\quaternion_operators.cpp">
+      <Filter>zygo\math\quaternion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\quaternion\quaternion_rotation.cpp">
+      <Filter>zygo\math\quaternion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\bigint\big_int.cpp">
+      <Filter>zygo\math\bigint</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\bigint\big_int_32.cpp">
+      <Filter>zygo\math\bigint</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\math\bigint\big_int3.cpp">
+      <Filter>zygo\math\bigint</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\debug\print_matrix.cpp">
+      <Filter>zygo\debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zygo\app\sim_clock.h">
@@ -200,7 +302,7 @@
     <ClInclude Include="src\zygo\crypto\aes\aes128.h">
       <Filter>zygo\crypto\aes</Filter>
     </ClInclude>
-    <ClInclude Include="src\zygo\random\my_random.h">
+    <ClInclude Include="src\zygo\random\random.h">
       <Filter>zygo\random</Filter>
     </ClInclude>
     <ClInclude Include="src\zygo\random\weighted_choice.h">
@@ -253,6 +355,45 @@
     </ClInclude>
     <ClInclude Include="src\zygo\containers\minmax.h">
       <Filter>zygo\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\matrix\matrix.h">
+      <Filter>zygo\math\matrix</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\matrix\small_fast_matrix\mat3.h">
+      <Filter>zygo\math\matrix\small_fast_matrix</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\geometry\primitive\triangle_with_normal.h">
+      <Filter>zygo\geometry\primitive</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\geometry\intersection\intersections.h">
+      <Filter>zygo\geometry\intersection</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\geometry\segment\segment2.h">
+      <Filter>zygo\geometry\segment</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\geometry\segment\segment3.h">
+      <Filter>zygo\geometry\segment</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\control\pid\pid.h">
+      <Filter>zygo\control\pid</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\quaternion\quaternion.h">
+      <Filter>zygo\math\quaternion</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\bigint\big_int.h">
+      <Filter>zygo\math\bigint</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\bigint\big_int_32.h">
+      <Filter>zygo\math\bigint</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\math\bigint\big_int3.h">
+      <Filter>zygo\math\bigint</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\io_helpers\matrix_serialize.h">
+      <Filter>zygo\io_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\debug\print_matrix.h">
+      <Filter>zygo\debug</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
