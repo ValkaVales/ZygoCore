@@ -285,15 +285,17 @@ void Aes128::encryptBlock( u8 const* bytes, u8* encrypted_res, int bytes_left )
   shiftRowsLeft();
   addSubRoundKey( expanded_key + AES_128_BLOCK_SIZE * AES_128_ROUNDS_COUNT );
 
+  // ALWAYS write out all 16 bytes: a block cipher permutes the whole block,
+  // so truncated ciphertext cannot be decrypted back
   for ( int i = 0; i < AES_128_BLOCK_SIZE; i++ )
-    if ( i < bytes_left )
-      encrypted_res[i] = state[i];
+    encrypted_res[i] = state[i];
 }
 
 void Aes128::decryptBlock( u8 const* bytes, u8* decrypted_res, int bytes_left )
 {
+  // ciphertext always consists of whole blocks: read all 16 bytes
   for ( int i = 0; i < AES_128_BLOCK_SIZE; i++ )
-    state[i] = i < bytes_left ? bytes[i] : 0;
+    state[i] = bytes[i];
 
   addSubRoundKey( expanded_key + AES_128_BLOCK_SIZE * AES_128_ROUNDS_COUNT );
   shiftRowsRight();
@@ -309,6 +311,7 @@ void Aes128::decryptBlock( u8 const* bytes, u8* decrypted_res, int bytes_left )
 
   addSubRoundKey( expanded_key );
 
+  // the zero padding is cut off here, on plaintext output
   for ( int i = 0; i < AES_128_BLOCK_SIZE; i++ )
     if ( i < bytes_left )
       decrypted_res[i] = state[i];

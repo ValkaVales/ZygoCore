@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zygo/math/common/consts.h>
+#include <zygo/core/types.h>
 
 
 namespace zygo {

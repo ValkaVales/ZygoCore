@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zygo/math/common/consts.h>
+#include <zygo/core/types.h>
 
 
 namespace zygo {
@@ -10,7 +10,6 @@ const int AES_128_BLOCK_SIZE        = 16; // 16 bytes == 128 bits
 const int AES_128_KEY_SIZE          = AES_128_BLOCK_SIZE;
 const int AES_128_EXPANDED_KEY_SIZE = 176;
 const int AES_128_ROUNDS_COUNT      = 10;
-
 
 class Aes128
 {
@@ -22,7 +21,18 @@ private:
 public:
   Aes128( u8 const* key );
 
+  // Ciphertext is always a whole number of blocks: for bytes_count == 20
+  // it occupies 32 bytes. Use cipherSize() to allocate encrypted_res.
+  static int cipherSize( int bytes_count )
+  {
+    return (bytes_count + AES_128_BLOCK_SIZE - 1) / AES_128_BLOCK_SIZE * AES_128_BLOCK_SIZE;
+  }
+
+  // encrypted_res must have room for cipherSize( bytes_count ) bytes
   void encrypt( u8 const* bytes, u8* encrypted_res, int bytes_count );
+
+  // bytes holds cipherSize( bytes_count ) bytes of ciphertext;
+  // exactly bytes_count bytes of plaintext are written to decrypted_res
   void decrypt( u8 const* bytes, u8* decrypted_res, int bytes_count );
 
 private:
