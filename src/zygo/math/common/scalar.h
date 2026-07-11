@@ -116,7 +116,7 @@ inline bool between01sqr( T a, T norm_sqr, T e )
 template <typename T>
 inline bool between0A( T a, T A, T e = EPSILON )
 {
-  return inRange( a, 0, A, e );
+  return inRange( a, T(0), A, e );
 }
 
 template <typename T>

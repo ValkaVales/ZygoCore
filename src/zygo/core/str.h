@@ -16,6 +16,9 @@ bool isDigitOrLetter  ( u8 c );
 bool isVisualSymbol   ( u8 c );
 bool isAnyVisualSymbol( u8 c );
 
+char toUpperCaseNoCheck( char c );
+char toLowerCaseNoCheck( char c );
+
 char toUpperCase( char c );
 char toLowerCase( char c );
 

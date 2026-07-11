@@ -47,6 +47,7 @@ Real PidController::calc1( Real cur_error, Real dt )
     first       = false;
     derivative  = REAL_ZERO;
     delta_derivative = REAL_ZERO;
+    prev_derivative  = REAL_ZERO; // otherwise the garbage first derivative (computed against prev_error == 0) leaks into delta_derivative on the SECOND step
   }
 
   Real speed_to_goal = derivative / dt;

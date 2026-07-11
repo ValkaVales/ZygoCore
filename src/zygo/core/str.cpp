@@ -52,14 +52,24 @@ bool isAnyVisualSymbol( u8 c )
       || isVisualSymbol ( c );
 }
 
-char toUpperCase( char c )
+char toUpperCaseNoCheck( char c )
 {
   return c - 'a' + 'A';
 }
 
-char toLowerCase( char c )
+char toLowerCaseNoCheck( char c )
 {
   return c - 'A' + 'a';
+}
+
+char toUpperCase( char c )
+{
+  return isCharLowCase( (u8)c ) ? toUpperCaseNoCheck(c) : c; // non-letters pass through unchanged
+}
+
+char toLowerCase( char c )
+{
+  return isCharUpperCase( (u8)c ) ? toLowerCaseNoCheck(c) : c;
 }
 
 void toUpperCase( char* s, u16 max_len )
@@ -71,7 +81,7 @@ void toUpperCase( char* s, u16 max_len )
       return;
 
     if ( isCharLowCase( c ) )
-      *s++ = toUpperCase( c );
+      *s++ = toUpperCaseNoCheck( c );
     else
       ++s;
   }
@@ -86,7 +96,7 @@ void toLowerCase( char* s, u16 max_len )
       return;
 
     if ( isCharUpperCase( c ) )
-      *s++ = toLowerCase( c );
+      *s++ = toLowerCaseNoCheck( c );
     else
       ++s;
   }

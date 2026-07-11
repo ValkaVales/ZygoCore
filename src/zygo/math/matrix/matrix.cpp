@@ -227,7 +227,11 @@ void Matrix::setPrefixFromArray( Real const* arr, int len )
 
 Matrix& Matrix::operator= ( Matrix const& other )
 {
+#ifdef MATRIX_EXTRA_RELEASE_ASSERTS
+  ZgAssertRelease( dimx == other.dimx && dimy == other.dimy );
+#else
   ZgAssert( dimx == other.dimx && dimy == other.dimy );
+#endif
 
   Real*       p1 = ptr();
   Real const* p2 = other.ptr();

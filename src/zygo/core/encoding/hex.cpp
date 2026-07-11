@@ -23,6 +23,9 @@ void hexToBytes( char const* text, u8* res, int text_len, int res_capacity ) // 
 
 void bytesToHex( u8 const* bytes, char* res, int bytes_count, int res_capacity ) // was bytesArrayToHexString
 {
+  if ( res_capacity <= 0 )
+    return;
+
   char* p = res;
 
   for ( int i = 0; i < bytes_count; i++ )
@@ -31,7 +34,7 @@ void bytesToHex( u8 const* bytes, char* res, int bytes_count, int res_capacity )
     u8 a1 = x >> 4;
     u8 a2 = x & 0xf;
 
-    if ( res_capacity > 1 )
+    if ( res_capacity > 2 ) // 2 digits + room for the terminating zero
     {
       *p++ = valueToDigit_upperCase( a1, HEX_RADIX );
       *p++ = valueToDigit_upperCase( a2, HEX_RADIX );
@@ -39,7 +42,7 @@ void bytesToHex( u8 const* bytes, char* res, int bytes_count, int res_capacity )
     res_capacity -= 2;
   }
 
-  *p = 0;
+  *p = 0; // always fits: the loop above kept one byte for it
 }
 
 } // namespace zygo
