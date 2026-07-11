@@ -5,8 +5,8 @@
 namespace zygo {
 
 MinMax::MinMax()
-  : min (  1e20 )
-  , max ( -1e20 )
+  : min (  REAL_BIG_VALUE )
+  , max ( -REAL_BIG_VALUE )
 {
 }
 

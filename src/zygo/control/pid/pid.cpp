@@ -1,4 +1,6 @@
 #include "pid.h"
+#include <zygo/math/common/consts.h>
+#include <zygo/core/assert.h>
 #include <cmath> // abs
 
 
@@ -16,11 +18,11 @@ PidController::PidController( Real param_p, Real param_d, Real param_d2, Real pa
   , param_i  ( param_i )
 
   , param_ad ( REAL_ZERO )
-  , ad_err_epsilon ( 0.00001 )
+  , ad_err_epsilon ( PID_EPSILON )
 
   , integral_error  ( REAL_ZERO )
   , prev_error      ( REAL_ZERO )
-  , prev_diff_error ( REAL_ZERO )
+  , prev_derivative ( REAL_ZERO )
 
   , first ( true )
 
@@ -32,20 +34,22 @@ PidController::PidController( Real param_p, Real param_d, Real param_d2, Real pa
 
 Real PidController::calc1( Real cur_error, Real dt )
 {
-  Real diff_error   = cur_error  - prev_error;
-  Real diff2_error  = diff_error - prev_diff_error;
+  ZgAssert( dt > EPSILON );
+
+  Real derivative       = (cur_error  - prev_error) / dt;
+  Real delta_derivative = derivative - prev_derivative;
 
   prev_error      = cur_error;
-  prev_diff_error = diff_error;
+  prev_derivative = derivative;
 
   if ( first )
   {
     first       = false;
-    diff_error  = REAL_ZERO;
-    diff2_error = REAL_ZERO;
+    derivative  = REAL_ZERO;
+    delta_derivative = REAL_ZERO;
   }
 
-  Real speed_to_goal = diff_error / dt;
+  Real speed_to_goal = derivative / dt;
   Real adaptive_diff_error = REAL_ZERO;
   Real cur_error_abs = std::abs( cur_error );
   //applyMin( cur_error_abs, ad_err_epsilon );
@@ -53,18 +57,18 @@ Real PidController::calc1( Real cur_error, Real dt )
   if ( cur_error_abs > ad_err_epsilon )
   {
     //adaptive_diff_error = sqr( speed_to_goal ) / cur_error_abs;
-    //if ( diff_error < REAL_ZERO )
+    //if ( derivative < REAL_ZERO )
     //  adaptive_diff_error = -adaptive_diff_error;
 
     adaptive_diff_error = speed_to_goal / cur_error_abs;
   }
 
-  integral_error += cur_error;
+  integral_error += cur_error * dt;
 
   return 
     - param_p  * cur_error
-    - param_d  * diff_error
-    - param_d2 * diff2_error
+    - param_d  * derivative
+    - param_d2 * delta_derivative
     - param_i  * integral_error
     //+ param_ad * adaptive_diff_error
     - param_ad * adaptive_diff_error

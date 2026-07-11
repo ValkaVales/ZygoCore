@@ -28,16 +28,16 @@ Real normalizeAnglePi( Real angle )
 
 }
 
-// Кратчайшая разница между углами.
-// Результат в диапазоне [-pi; +pi]
-double angleDelta( double from, double to )
+// РљСЂР°С‚С‡Р°Р№С€Р°СЏ СЂР°Р·РЅРёС†Р° РјРµР¶РґСѓ СѓРіР»Р°РјРё.
+// Р РµР·СѓР»СЊС‚Р°С‚ РІ РґРёР°РїР°Р·РѕРЅРµ [-pi; +pi]
+Real angleDelta( Real from, Real to )
 {
   return normalizeAnglePi( to - from );
 }
 
-// Расстояние между углами.
-// Результат в диапазоне [0; pi]
-double angleDistance( double a, double b )
+// Р Р°СЃСЃС‚РѕСЏРЅРёРµ РјРµР¶РґСѓ СѓРіР»Р°РјРё.
+// Р РµР·СѓР»СЊС‚Р°С‚ РІ РґРёР°РїР°Р·РѕРЅРµ [0; pi]
+Real angleDistance( Real a, Real b )
 {
   return std::abs( angleDelta( a, b ) );
 }

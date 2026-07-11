@@ -134,16 +134,17 @@ public:
   Matrix operator*( Real v ) const;
   Matrix operator/( Real v ) const;
 
-  Matrix multiply_parallel    ( Matrix const& other ) const;
-  Matrix multiply_singleThread( Matrix const& other ) const;
-
   Vector3 multiplyByVector3( Vector3 const & v ) const;
 
+  Matrix multiply_singleThread                      ( Matrix const& other ) const;
   void multiplyByColumnMatrix_singleThread          ( Matrix const& other, Matrix& res ) const;
-  void multiplyByColumnMatrix_parallel              ( Matrix const& other, Matrix& res ) const;
-
   void multiplyByColumnMatrix_AddToRes_singleThread ( Matrix const& other, Matrix& res ) const;
+
+#ifdef _OPENMP
+  Matrix multiply_parallel                          ( Matrix const& other ) const;
+  void multiplyByColumnMatrix_parallel              ( Matrix const& other, Matrix& res ) const;
   void multiplyByColumnMatrix_AddToRes_parallel     ( Matrix const& other, Matrix& res ) const;
+#endif // _OPENMP
 
   //inline bool shouldUseMultiThreading_inMultiplications() const { return dimx * dimy > 5000; } // heuristic
   inline bool shouldUseMultiThreading_inMultiplications( int other_dimx ) const { return (long long)dimx * (long long)dimy * (long long)other_dimx > 300000LL; } // heuristic

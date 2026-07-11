@@ -51,7 +51,7 @@ bool ByteWriter::put( void const * src, u32 count )
   if ( external_buf )
   {
     // overflow-safe form of: ext_pos + count > ext_capacity
-    if ( ext_pos + count > ext_capacity )
+    if ( count > ext_capacity - ext_pos )
     {
       is_ok = false;
       return false;

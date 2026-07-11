@@ -12,8 +12,8 @@ inline bool checkAngle180( T angle, T e = EPSILON )
   return ge( angle, -PI ) && le( angle, PI );
 }
 
-double normalizeAnglePi( Real angle_rad );
-double angleDelta( double from, double to );
-double angleDistance( double a, double b );
+Real normalizeAnglePi( Real angle_rad );
+Real angleDelta( Real from, Real to );
+Real angleDistance( Real a, Real b );
 
 } // namespace zygo

@@ -499,7 +499,7 @@ struct Mat3 final
   {
     Mat3 out;
     const bool ok = tryInverse( out );
-    ZgAssert( ok );
+    ZgAssertRelease( ok );
     return out;
   }
 

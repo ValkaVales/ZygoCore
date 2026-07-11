@@ -160,22 +160,22 @@ IntersectionType Intersections::genericIntersection_helper
   return IntersectionType::intersect;
 }
 
-inline bool Intersections::intersectionSegSeg( Segment2 const & s1, Segment2 const & s2, Real eps )
+bool Intersections::intersectionSegSeg( Segment2 const & s1, Segment2 const & s2, Real eps )
 {
   return IntersectionType::disjoint != genericIntersection( s1, s2, NULL, NULL, eps );
 }
 
-inline bool Intersections::rightTurn( Vector2 const & a, Vector2 const & b, Vector2 const & c )
+bool Intersections::rightTurn( Vector2 const & a, Vector2 const & b, Vector2 const & c )
 {
   return ((b - a) ^ (c - a)) < REAL_ZERO;
 }
 
-inline bool Intersections::leftTurn( Vector2 const & a, Vector2 const & b, Vector2 const & c )
+bool Intersections::leftTurn( Vector2 const & a, Vector2 const & b, Vector2 const & c )
 {
   return ((b - a) ^ (c - a)) > REAL_ZERO;
 }
 
-inline bool Intersections::intersectionPointTriangle(
+bool Intersections::intersectionPointTriangle(
   Vector2 const & p,
   Vector2 const & p1,
   Vector2 const & p2,
@@ -206,7 +206,7 @@ inline bool Intersections::intersectionPointTriangle(
 }
 
 // Is fast, but NOT right, because of intersection test absence
-inline bool Intersections::intersectionPointQuad_fast(
+bool Intersections::intersectionPointQuad_fast(
   Vector2 const & p,
   Vector2 const & p1,
   Vector2 const & p2,
@@ -241,7 +241,7 @@ inline bool Intersections::intersectionPointQuad_fast(
     (!b1 && !b2 && !b3 && !b4);
 }
 
-inline bool Intersections::intersectionSegQuad(
+bool Intersections::intersectionSegQuad(
   Segment2 const & s,
   Vector2 const & p1,
   Vector2 const & p2,

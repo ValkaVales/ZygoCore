@@ -6,7 +6,7 @@ namespace zygo {
 
 void hsvToRGB( Real h, Real s, Real v, Real &r, Real &g, Real &b ) // h is in degrees (0...360),  other values are in (0...1)
 {
-  if ( s <= 0.0 )
+  if ( s <= REAL_ZERO )
   {
     r = v;
     g = v;
@@ -14,18 +14,18 @@ void hsvToRGB( Real h, Real s, Real v, Real &r, Real &g, Real &b ) // h is in de
     return;
   }
 
-  Real hh = h;
-  if ( hh >= 360.0 )
-    hh = 0.0;
+  Real hh = std::fmod( h, DEG_PI_MUL_2 );
+  if ( hh < 0 )
+    hh += DEG_PI_MUL_2;
 
-  hh /= 60.0;
+  hh /= Real(60.0);
   int i = (int)hh;
 
-  Real ff = hh - i; // == fmod( h, 60.0 )
+  Real ff = hh - i; // == fmod( h, 60 )
 
-  Real p = v * (1.0 - s);
-  Real q = v * (1.0 - (s * ff));
-  Real t = v * (1.0 - (s * (1.0 - ff)));
+  Real p = v * (REAL_ONE - s);
+  Real q = v * (REAL_ONE - (s * ff));
+  Real t = v * (REAL_ONE - (s * (REAL_ONE - ff)));
 
   switch ( i )
   {
@@ -76,16 +76,16 @@ void rgbToHSV( Real r, Real g, Real b, Real& h, Real& s, Real &v )
   Real delta = max_color_component - min_color_component;
   if ( delta < EPSILON )
   {
-    s = 0.0;
-    h = 0.0; // undefined
+    s = REAL_ZERO;
+    h = REAL_ZERO; // undefined
     return;
   }
 
   if ( isZero( max_color_component ) )
   {
     // if max_color_component is 0, then r = g = b = 0
-    s = 0.0;
-    h = 0.0; // undefined
+    s = REAL_ZERO;
+    h = REAL_ZERO; // undefined
     return;
   }
 
@@ -95,14 +95,14 @@ void rgbToHSV( Real r, Real g, Real b, Real& h, Real& s, Real &v )
     h = (g - b) / delta;          // between yellow & magenta
   else
   if ( g >= max_color_component )
-    h = 2.0 + (b - r) / delta;    // between cyan & yellow
+    h = Real(2.0) + (b - r) / delta;    // between cyan & yellow
   else
-    h = 4.0 + (r - g) / delta;    // between magenta & cyan
+    h = Real(4.0) + (r - g) / delta;    // between magenta & cyan
 
-  h *= 60.0; // in degrees
+  h *= Real(60.0); // in degrees
 
-  if ( h < 0.0 )
-    h += 360.0;
+  if ( h < REAL_ZERO )
+    h += DEG_PI_MUL_2;
 }
 
 uint hsvToColor( Real h, Real s, Real v ) // h is in degrees (0...360),  s and v are in (0...1)
@@ -123,9 +123,9 @@ void colorToHSV( uint color, Real& h, Real& s, Real& v )
   uint r = color & 0xff;
 
   rgbToHSV( 
-    (Real)r / 255.0,
-    (Real)g / 255.0,
-    (Real)b / 255.0,
+    (Real)r / Real(255.0),
+    (Real)g / Real(255.0),
+    (Real)b / Real(255.0),
     h,
     s,
     v
@@ -134,7 +134,7 @@ void colorToHSV( uint color, Real& h, Real& s, Real& v )
 
 uint hueToColor( Real value )
 {
-  return hsvToColor( 360.0 * (1.0 - value), 1.0, 1.0 );
+  return hsvToColor( DEG_PI_MUL_2 * (REAL_ONE - value), REAL_ONE, REAL_ONE );
 }
 
 uint makeColorLighter( uint color )
@@ -144,7 +144,7 @@ uint makeColorLighter( uint color )
   Real v;
 
   colorToHSV( color, h, s, v );
-  return hsvToColor( h, s * 0.5, v );
+  return hsvToColor( h, s * REAL_HALF, v );
 }
 
 } // namespace zygo

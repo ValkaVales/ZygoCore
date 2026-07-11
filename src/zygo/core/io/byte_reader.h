@@ -10,7 +10,7 @@ namespace zygo {
 
 // Sequential reader of binary data.
 //
-// Error model — "poisoned stream": any failure (file not found, read past the end, corrupted length field) sets isOk() to false;
+// Error model â€” "poisoned stream": any failure (file not found, read past the end, corrupted length field) sets isOk() to false;
 // the failed read and ALL further reads return 0.
 // Parse first, check isOk() once at the end instead of checking every single call.
 class ByteReader
@@ -28,6 +28,9 @@ private:
 public:
   ByteReader( u8 const * buf, u32 buf_sz, Endian endian = Endian::Little );
   explicit ByteReader( char const * filename, Endian endian = Endian::Little );
+
+  ByteReader( ByteReader const& ) = delete;
+  ByteReader& operator=( ByteReader const& ) = delete;
 
   bool isOk     () const { return is_ok           ; }
   u32  size     () const { return buf_sz          ; }

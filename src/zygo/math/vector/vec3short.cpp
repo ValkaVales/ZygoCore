@@ -49,7 +49,7 @@ bool Vector3Short::xyEquals( Vector3Short const& v ) const
     v.y == y;
 }
 
-inline bool Vector3Short::isZeroVector() const
+bool Vector3Short::isZeroVector() const
 {
   return x == 0 && y == 0 && z == 0;
 }

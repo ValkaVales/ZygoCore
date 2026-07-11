@@ -21,7 +21,7 @@ private:
   //Real total_err;
   Real integral_error;
   Real prev_error;
-  Real prev_diff_error;
+  Real prev_derivative;
 
   bool first;
 

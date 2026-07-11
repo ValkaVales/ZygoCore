@@ -41,7 +41,7 @@ bool Vector3Int::isEqual( i32 x, i32 y, i32 z ) const
     z == this->z;
 }
 
-inline bool Vector3Int::isZeroVector() const
+bool Vector3Int::isZeroVector() const
 {
   return x == 0 && y == 0 && z == 0;
 }

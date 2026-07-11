@@ -36,7 +36,7 @@ bool Vector2Short::isEqual( i16 x, i16 y ) const
     y == this->y;
 }
 
-inline bool Vector2Short::isZeroVector() const
+bool Vector2Short::isZeroVector() const
 {
   return x == 0 && y == 0;
 }

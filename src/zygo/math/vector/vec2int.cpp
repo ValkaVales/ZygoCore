@@ -36,7 +36,7 @@ bool Vector2Int::isEqual( i32 x, i32 y ) const
     y == this->y;
 }
 
-inline bool Vector2Int::isZeroVector() const
+bool Vector2Int::isZeroVector() const
 {
   return x == 0 && y == 0;
 }

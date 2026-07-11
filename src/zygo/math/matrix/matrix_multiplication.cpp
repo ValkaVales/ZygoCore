@@ -9,8 +9,10 @@ Matrix Matrix::operator*( Matrix const& other ) const
 {
   ZgAssert( dimx == other.dimy );
 
+#ifdef _OPENMP
   if ( shouldUseMultiThreading_inMultiplications( other.dimx ) )
     return multiply_parallel( other );
+#endif // _OPENMP
 
   return multiply_singleThread( other );
 }

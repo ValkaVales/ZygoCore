@@ -99,8 +99,8 @@ u16 my_strlen( char const * str, u16 max_len )
     return 0;
 
   char const * s = str;
-  register u16 i = 0;
-  register u16 k = max_len;
+  u16 i = 0;
+  u16 k = max_len;
 
   while ( *(s++) )
   {

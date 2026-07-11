@@ -130,7 +130,7 @@ void bytesArrayToBase64( u8 const* bytes, char* res, int bytes_count, int res_ca
     }
   }
 
-  ZgAssert( k < res_capacity );
+  ZgAssertRelease( k < res_capacity );
   res[k++] = 0;
 }
 

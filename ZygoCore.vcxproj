@@ -106,11 +106,15 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>src</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy_after_build.bat</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -122,6 +126,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>src</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,10 +134,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy_after_build.bat</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\zygo\app\sim_clock.cpp" />
-    <ClCompile Include="src\zygo\containers\circular_buffer.cpp" />
     <ClCompile Include="src\zygo\containers\minmax.cpp" />
     <ClCompile Include="src\zygo\control\pid\pid.cpp" />
     <ClCompile Include="src\zygo\core\encoding\base64.cpp" />
@@ -189,7 +196,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zygo\app\sim_clock.h" />
-    <ClInclude Include="src\zygo\containers\circular_buffer.h" />
+    <ClInclude Include="src\zygo\containers\circular_buffer\circular_buffer.h" />
+    <ClInclude Include="src\zygo\containers\circular_buffer\circular_buffer_base.h" />
+    <ClInclude Include="src\zygo\containers\circular_buffer\circular_buffer_for_objects.h" />
     <ClInclude Include="src\zygo\containers\minmax.h" />
     <ClInclude Include="src\zygo\control\pid\pid.h" />
     <ClInclude Include="src\zygo\core\assert.h" />

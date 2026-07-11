@@ -2,7 +2,7 @@
 
 set SOURCE=D:\VS\ZygoCore
 
-rem set DEST=D:\VS\TestMyGlLib
+set DEST=D:\VS\TestZygoCore
 rem set DEST=D:\VS\TestPID
 rem set DEST=D:\VS\FlyingModels
 rem set DEST=D:\VS\PhysTest
@@ -13,7 +13,7 @@ rem set DEST=D:\VS\TestUartConnection
 rem set DEST=D:\VS\_NeuralNetStudy_UsingPyTorch\Test000
 rem set DEST=D:\VS\TurretWithAi
 rem set DEST=D:\VS\RobotModels
-set DEST=D:\VS\PhysSimpleTest2
+rem set DEST=D:\VS\PhysSimpleTest2
 rem set DEST=D:\VS\RandomNumberGenerator
 rem set DEST=D:\VS\_ForPavel\04_NoAI_3D_pathFind
 rem set DEST=D:\VS\_ForPavel\05_NoAI_3D_pathFind_without_OneRobot_SubData
@@ -37,22 +37,6 @@ call:myMkDir %DEST%\lib_release
 copy %SOURCE%\x64\Debug\zygocore.lib %DEST%\lib\
 copy %SOURCE%\x64\Release\zygocore.lib %DEST%\lib_release\
 
-rem call:copyH common
-rem call:copyH graphics
-rem call:copyH graphics\gl
-rem call:copyH input
-rem call:copyH math
-rem call:copyH math\common
-rem call:copyH math\intersection
-rem call:copyH math\vector
-rem call:copyH math\segment
-rem call:copyH math\quaternion
-
-copy %SOURCE%\src\graphics\gl\freeglut.lib %DEST%\lib\
-copy %SOURCE%\src\graphics\gl\freeglut.lib %DEST%\lib_release\
-copy %SOURCE%\src\graphics\gl\freeglut.dll %DEST%\x64\Debug\
-copy %SOURCE%\src\graphics\gl\freeglut.dll %DEST%\x64\Release\
-
 goto:eof
 
 rem ------------------------------------------------------------------- functions
@@ -64,7 +48,3 @@ echo Dir created: %~1
 )
 goto:eof
 
-rem :copyH
-rem call:myMkDir %DEST%\include\%~1
-rem copy %SOURCE%\src\%~1\*.h %DEST%\include\%~1\
-rem goto:eof

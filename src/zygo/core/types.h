@@ -27,28 +27,25 @@ const int U64_SZ      = 8;
 const int DOUBLE_SZ   = sizeof( double );
 
 
-#if defined(_MSC_VER)
-#define FORCE_INLINE __forceinline
-#else
-#define FORCE_INLINE inline __attribute__((always_inline))
-#endif
+#define FLOAT_MNUMBER // Comment this to use double, uncomment - to use float
 
-//#define FLOAT_MNUMBER
 
 #ifdef FLOAT_MNUMBER
 typedef float Real;
 
-const Real REAL_ZERO  = 0.0f;
-const Real REAL_ONE   = 1.0f;
-const Real REAL_TWO   = 2.0f;
-const Real REAL_HALF  = 0.5f;
+const Real REAL_ZERO      = 0.0f;
+const Real REAL_ONE       = 1.0f;
+const Real REAL_TWO       = 2.0f;
+const Real REAL_HALF      = 0.5f;
+const Real REAL_BIG_VALUE = 10e15f;
 #else
 typedef double Real;
 
-const Real REAL_ZERO  = 0.0;
-const Real REAL_ONE   = 1.0;
-const Real REAL_TWO   = 2.0;
-const Real REAL_HALF  = 0.5;
+const Real REAL_ZERO      = 0.0;
+const Real REAL_ONE       = 1.0;
+const Real REAL_TWO       = 2.0;
+const Real REAL_HALF      = 0.5;
+const Real REAL_BIG_VALUE = 10e20f;
 #endif
 
 

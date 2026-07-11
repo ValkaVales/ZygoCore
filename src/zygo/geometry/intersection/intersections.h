@@ -17,7 +17,7 @@ class Intersections
 {
 public:
 
-  inline IntersectionType genericIntersection
+  IntersectionType genericIntersection
   (
     Segment2 const & s1,
     Segment2 const & s2,
@@ -38,12 +38,12 @@ private:
   );
 
   
-  inline bool intersectionSegSeg( Segment2 const & s1, Segment2 const & s2, Real eps = EPSILON );
+  bool intersectionSegSeg( Segment2 const & s1, Segment2 const & s2, Real eps = EPSILON );
 
-  inline bool rightTurn( Vector2 const & a, Vector2 const & b, Vector2 const & c );
-  inline bool leftTurn ( Vector2 const & a, Vector2 const & b, Vector2 const & c );
+  bool rightTurn( Vector2 const & a, Vector2 const & b, Vector2 const & c );
+  bool leftTurn ( Vector2 const & a, Vector2 const & b, Vector2 const & c );
 
-  inline bool intersectionPointTriangle(
+  bool intersectionPointTriangle(
     Vector2 const & p,
     Vector2 const & p1,
     Vector2 const & p2,
@@ -51,7 +51,7 @@ private:
     Real eps = EPSILON );
 
   // Is fast, but NOT right, because of intersection test absence
-  inline bool intersectionPointQuad_fast(
+  bool intersectionPointQuad_fast(
     Vector2 const & p,
     Vector2 const & p1,
     Vector2 const & p2,
@@ -59,7 +59,7 @@ private:
     Vector2 const & p4,
     Real eps = EPSILON );
 
-  inline bool intersectionSegQuad(
+  bool intersectionSegQuad(
     Segment2 const & s,
     Vector2 const & p1,
     Vector2 const & p2,

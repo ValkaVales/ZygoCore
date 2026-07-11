@@ -76,6 +76,9 @@
     <Filter Include="zygo\math\bigint">
       <UniqueIdentifier>{f603be4d-467b-44f1-ace6-880261ff0d33}</UniqueIdentifier>
     </Filter>
+    <Filter Include="zygo\containers\circular_buffer">
+      <UniqueIdentifier>{cab2f931-6981-4e7e-b4ed-99f710103837}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\zygo\app\sim_clock.cpp">
@@ -161,9 +164,6 @@
     </ClCompile>
     <ClCompile Include="src\zygo\core\encoding\base64.cpp">
       <Filter>zygo\core\encoding</Filter>
-    </ClCompile>
-    <ClCompile Include="src\zygo\containers\circular_buffer.cpp">
-      <Filter>zygo\containers</Filter>
     </ClCompile>
     <ClCompile Include="src\zygo\containers\minmax.cpp">
       <Filter>zygo\containers</Filter>
@@ -350,9 +350,6 @@
     <ClInclude Include="src\zygo\io_helpers\file_name.h">
       <Filter>zygo\io_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="src\zygo\containers\circular_buffer.h">
-      <Filter>zygo\containers</Filter>
-    </ClInclude>
     <ClInclude Include="src\zygo\containers\minmax.h">
       <Filter>zygo\containers</Filter>
     </ClInclude>
@@ -394,6 +391,15 @@
     </ClInclude>
     <ClInclude Include="src\zygo\debug\print_matrix.h">
       <Filter>zygo\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\containers\circular_buffer\circular_buffer.h">
+      <Filter>zygo\containers\circular_buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\containers\circular_buffer\circular_buffer_for_objects.h">
+      <Filter>zygo\containers\circular_buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\containers\circular_buffer\circular_buffer_base.h">
+      <Filter>zygo\containers\circular_buffer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

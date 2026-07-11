@@ -9,7 +9,9 @@ namespace zygo {
 constexpr Real MATRIX_EPSILON   = 1e-7f;
 constexpr Real EPSILON          = 1e-7f;
 constexpr Real SMALL_EPSILON    = 1e-20f;
+constexpr Real BIG_EPSILON      = 1e-9f;
 constexpr Real ASSERT_EPSILON   = 1e-5f;
+constexpr Real PID_EPSILON      = 1e-4f;
 constexpr Real QUATERNION_SPHERICAL_INTERPOLATION_THRESHOLD_EPSILON = 2e-5f;
 
 constexpr Real PI           = 3.1415926535897932384626433832795028841971693993751f;
@@ -29,6 +31,7 @@ constexpr Real EPSILON          = 1e-15;
 constexpr Real SMALL_EPSILON    = 1e-50;
 constexpr Real BIG_EPSILON      = 1e-12;
 constexpr Real ASSERT_EPSILON   = 1e-10;
+constexpr Real PID_EPSILON      = 1e-7;
 constexpr Real QUATERNION_SPHERICAL_INTERPOLATION_THRESHOLD_EPSILON = 1e-8;
 
 constexpr Real PI           = 3.1415926535897932384626433832795028841971693993751;

@@ -42,7 +42,7 @@ Real Vector2::length() const
   return std::sqrt( lengthSqr() );
 }
 
-inline Real Vector2::lengthSqr() const
+Real Vector2::lengthSqr() const
 {
   return sqr( x ) + sqr( y );
 }
@@ -57,7 +57,7 @@ Real Vector2::distToSqr( Vector2 const & p ) const
   return sqr( p.x - x ) + sqr( p.y - y );
 }
 
-inline bool Vector2::isZeroVector() const
+bool Vector2::isZeroVector() const
 {
   return isZero( x ) && isZero( y );
 }
