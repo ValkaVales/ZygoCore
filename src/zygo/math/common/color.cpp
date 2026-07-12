@@ -116,11 +116,11 @@ uint hsvToColor( Real h, Real s, Real v ) // h is in degrees (0...360),  s and v
   return RGBD2COL( r, g, b );
 }
 
-void colorToHSV( uint color, Real& h, Real& s, Real& v )
+void colorToHSV( uint rgb, Real& h, Real& s, Real& v )
 {
-  uint b = color & 0xff;    color >>= 8;
-  uint g = color & 0xff;    color >>= 8;
-  uint r = color & 0xff;
+  uint r = (rgb >> 16) & 0xff;
+  uint g = (rgb >>  8) & 0xff;
+  uint b =  rgb        & 0xff;
 
   rgbToHSV( 
     (Real)r / Real(255.0),
@@ -137,14 +137,28 @@ uint hueToColor( Real value )
   return hsvToColor( DEG_PI_MUL_2 * (REAL_ONE - value), REAL_ONE, REAL_ONE );
 }
 
-uint makeColorLighter( uint color )
+uint makeColorLighter( uint rgb )
 {
   Real h;
   Real s;
   Real v;
 
-  colorToHSV( color, h, s, v );
+  colorToHSV( rgb, h, s, v );
   return hsvToColor( h, s * REAL_HALF, v );
 }
+
+uint makeColorLighter_simple( uint rgb )
+{
+  uint r = (rgb >> 16) & 0xff;
+  uint g = (rgb >>  8) & 0xff;
+  uint b =  rgb        & 0xff;
+
+  r = ( r + 0xff ) / 2;
+  g = ( g + 0xff ) / 2;
+  b = ( b + 0xff ) / 2;
+
+  return (r << 16) | (g << 8) | b;
+}
+
 
 } // namespace zygo

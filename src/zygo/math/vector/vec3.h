@@ -86,7 +86,7 @@ public:
   Vector3 operator * ( Real d ) const;
   Vector3 operator / ( Real d ) const;
   
-  Real  operator *  ( Vector3 const & v ) const;
+  Real    operator *  ( Vector3 const & v ) const; // dot product
   Vector3 crossProduct( Vector3 const & v ) const;
 
   /// Calculates projection of vector V on 'this' vector.

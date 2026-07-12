@@ -2,7 +2,8 @@
 
 set SOURCE=D:\VS\ZygoCore
 
-set DEST=D:\VS\TestZygoCore
+rem set DEST=D:\VS\TestZygoCore
+set DEST=D:\VS\ZygoGL
 rem set DEST=D:\VS\TestPID
 rem set DEST=D:\VS\FlyingModels
 rem set DEST=D:\VS\PhysTest
