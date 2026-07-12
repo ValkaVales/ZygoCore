@@ -1,10 +1,13 @@
 @echo off
 
 set SOURCE=D:\VS\ZygoCore
+set DEST0=D:\VS\ZygoGL
 
 rem set DEST=D:\VS\TestZygoCore
-set DEST=D:\VS\ZygoGL
-rem set DEST=D:\VS\TestPID
+rem set DEST=D:\VS\TitanBrusok
+set DEST=D:\VS\TestPID
+
+
 rem set DEST=D:\VS\FlyingModels
 rem set DEST=D:\VS\PhysTest
 rem set DEST=D:\VS\_NeuroBook\CudaTest00
@@ -37,6 +40,9 @@ call:myMkDir %DEST%\lib_release
 
 copy %SOURCE%\x64\Debug\zygocore.lib %DEST%\lib\
 copy %SOURCE%\x64\Release\zygocore.lib %DEST%\lib_release\
+
+copy %SOURCE%\x64\Debug\zygocore.lib %DEST0%\lib\
+copy %SOURCE%\x64\Release\zygocore.lib %DEST0%\lib_release\
 
 goto:eof
 
