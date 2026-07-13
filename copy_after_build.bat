@@ -5,7 +5,9 @@ set DEST0=D:\VS\ZygoGL
 
 rem set DEST=D:\VS\TestZygoCore
 rem set DEST=D:\VS\TitanBrusok
-set DEST=D:\VS\TestPID
+rem set DEST=D:\VS\TestPID
+set DEST=D:\VS\PhysRigidBody
+
 
 
 rem set DEST=D:\VS\FlyingModels

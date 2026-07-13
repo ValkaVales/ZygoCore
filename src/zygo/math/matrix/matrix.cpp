@@ -19,6 +19,7 @@ Matrix::Matrix( int dimy, int dimx, char const * name )
   ZgAssert( dimx >= 1 && dimy >= 1 );
 
 #ifdef DEBUG_MATRIX
+  m.resize( size );
   //m.assign( size, REAL_ZERO );
 #else
   m = new Real[size];

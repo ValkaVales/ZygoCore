@@ -10,24 +10,24 @@ SimClock::SimClock( double dt_, int ticks_per_frame_ )
   , pending_steps   ( 0 )
   , ticks_per_frame ( ticks_per_frame_ > 0 ? ticks_per_frame_ : 1 )
 {
-  wall.restart();
-  wall.pause(); // start paused
+  stopwatch.restart();
+  stopwatch.pause(); // start paused
 }
 
 void SimClock::pause()
 {
-  wall.pause();
+  stopwatch.pause();
 }
 
 void SimClock::resume()
 {
   pending_steps = 0;
-  wall.resume();
+  stopwatch.resume();
 }
 
 void SimClock::togglePause()
 {
-  if ( wall.isPaused() )
+  if ( stopwatch.isPaused() )
     resume();
   else
     pause();
@@ -41,7 +41,7 @@ void SimClock::requestSteps( int count )
 
 void SimClock::pauseOrStepOnce()
 {
-  if ( !wall.isPaused() )
+  if ( !stopwatch.isPaused() )
     pause();
   else
     requestSteps( 1 );
