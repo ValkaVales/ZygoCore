@@ -79,6 +79,24 @@
     <Filter Include="zygo\containers\circular_buffer">
       <UniqueIdentifier>{cab2f931-6981-4e7e-b4ed-99f710103837}</UniqueIdentifier>
     </Filter>
+    <Filter Include="zygo\physics">
+      <UniqueIdentifier>{fcab6e0e-aa06-444f-866f-779d990879b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\physics\body">
+      <UniqueIdentifier>{bc5082be-ed2b-4e96-9042-69ace3a6d106}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\physics\joint">
+      <UniqueIdentifier>{f5f2203d-1806-4e45-ae1e-65dd062a9311}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\physics\shape">
+      <UniqueIdentifier>{884bf35e-2512-45d1-9b77-70ca78826884}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\physics\terrain">
+      <UniqueIdentifier>{a2d77b51-1df4-4b6d-a672-0c6de21f9d6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\physics\world">
+      <UniqueIdentifier>{85fbf212-263b-4398-b3a2-41104c6a5e51}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\zygo\app\sim_clock.cpp">
@@ -246,6 +264,57 @@
     <ClCompile Include="src\zygo\io_helpers\matrix_serialize.cpp">
       <Filter>zygo\io_helpers</Filter>
     </ClCompile>
+    <ClCompile Include="src\zygo\physics\body\articulated_body.cpp">
+      <Filter>zygo\physics\body</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\body\rigid_body.cpp">
+      <Filter>zygo\physics\body</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\body\rigid_body_create.cpp">
+      <Filter>zygo\physics\body</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\body\rigid_body_integrate.cpp">
+      <Filter>zygo\physics\body</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\joint\hinge_joint.cpp">
+      <Filter>zygo\physics\joint</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\joint\hinge_joint_limit.cpp">
+      <Filter>zygo\physics\joint</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\joint\hinge_joint_motor.cpp">
+      <Filter>zygo\physics\joint</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\joint\joint_limits.cpp">
+      <Filter>zygo\physics\joint</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\world\physics_world.cpp">
+      <Filter>zygo\physics\world</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\terrain\terrain.cpp">
+      <Filter>zygo\physics\terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\shape\shape.cpp">
+      <Filter>zygo\physics\shape</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\shape\shape_box.cpp">
+      <Filter>zygo\physics\shape</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\shape\shape_capsule.cpp">
+      <Filter>zygo\physics\shape</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\shape\shape_cylinder.cpp">
+      <Filter>zygo\physics\shape</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\shape\shape_sphere.cpp">
+      <Filter>zygo\physics\shape</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\phys_math.cpp">
+      <Filter>zygo\physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\solver_statistics.cpp">
+      <Filter>zygo\physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zygo\app\sim_clock.h">
@@ -403,6 +472,57 @@
     </ClInclude>
     <ClInclude Include="src\zygo\containers\circular_buffer\circular_buffer_base.h">
       <Filter>zygo\containers\circular_buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\body\articulated_body.h">
+      <Filter>zygo\physics\body</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\body\rigid_body.h">
+      <Filter>zygo\physics\body</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\joint\hinge_joint.h">
+      <Filter>zygo\physics\joint</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\joint\joint_limits.h">
+      <Filter>zygo\physics\joint</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\world\contact_point.h">
+      <Filter>zygo\physics\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\world\physics_world.h">
+      <Filter>zygo\physics\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\terrain\terrain.h">
+      <Filter>zygo\physics\terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\shape\shape.h">
+      <Filter>zygo\physics\shape</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\shape\shape_box.h">
+      <Filter>zygo\physics\shape</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\shape\shape_capsule.h">
+      <Filter>zygo\physics\shape</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\shape\shape_cylinder.h">
+      <Filter>zygo\physics\shape</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\shape\shape_sphere.h">
+      <Filter>zygo\physics\shape</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\i_physics_drawer.h">
+      <Filter>zygo\physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\phys_consts.h">
+      <Filter>zygo\physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\phys_math.h">
+      <Filter>zygo\physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\physics.h">
+      <Filter>zygo\physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\solver_statistics.h">
+      <Filter>zygo\physics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
