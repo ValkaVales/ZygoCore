@@ -14,30 +14,27 @@ namespace
 {
   // Effective mass matrix K = (1/mA + 1/mB) * I + [rA]x * invIA * [rA]x^T + [rB]x * invIB * [rB]x^T
   // for the anchor constraint (3 linear rows).
-  Matrix computeAnchorEffectiveMass(
+  Mat3 computeAnchorEffectiveMass(
     double inv_mass_A,
     double inv_mass_B,
     Vector3 const & rA,
     Vector3 const & rB,
-    Matrix const & inv_IA,
-    Matrix const & inv_IB
+    Mat3 const & inv_IA,
+    Mat3 const & inv_IB
   )
   {
-    Matrix I( 3, 3 );
-    I.makeIdentity();
-
-    Matrix rAx = Matrix::makeSkewMatrixFromVector( rA );
-    Matrix rBx = Matrix::makeSkewMatrixFromVector( rB );
+    Mat3 rAx = Mat3::skew( rA );
+    Mat3 rBx = Mat3::skew( rB );
 
     double coef = inv_mass_A + inv_mass_B;
-    Matrix K = I * coef;
+    Mat3 K = Mat3::identity() * coef;
 
-    K += (rAx * inv_IA) * rAx.transpose();
-    K += (rBx * inv_IB) * rBx.transpose();
+    K += ( rAx * inv_IA ).mulTransposedRight( rAx );
+    K += ( rBx * inv_IB ).mulTransposedRight( rBx );
 
-    K.addAt( 0, SOFTNESS );
-    K.addAt( 4, SOFTNESS );
-    K.addAt( 8, SOFTNESS );
+    K.m[0] += SOFTNESS;
+    K.m[4] += SOFTNESS;
+    K.m[8] += SOFTNESS;
 
     return K;
   }
@@ -94,8 +91,8 @@ Vector3 HingeJoint::calcTotalL() const
   Vector3 LB_orb = (objB->center_of_mass_pos - system_com).crossProduct( PB );
 
   Vector3 L_spin =
-    objA->inertia_tensor_world.multiplyByVector3( objA->angular_speed ) +
-    objB->inertia_tensor_world.multiplyByVector3( objB->angular_speed );
+    objA->inertia_tensor_world * objA->angular_speed +
+    objB->inertia_tensor_world * objB->angular_speed;
 
   return LA_orb + LB_orb + L_spin;
 }
@@ -148,7 +145,7 @@ bool HingeJoint::solveAnchorVelocity( double dt ) // returns true, if still has 
 
   Vector3 rhs = -(relV + bias);
 
-  Matrix K = computeAnchorEffectiveMass(
+  Mat3 K = computeAnchorEffectiveMass(
     objA->inv_mass,
     objB->inv_mass,
     rA,
@@ -157,7 +154,12 @@ bool HingeJoint::solveAnchorVelocity( double dt ) // returns true, if still has 
     objB->inertia_tensor_world_inv
   );
 
-  Vector3 J = K.solve3x3( rhs );
+  // K is symmetric positive definite - solve with the fast Cholesky path.
+  Vector3 J;
+  //if ( !K.trySolveSPD( rhs, J ) )
+  if ( !K.trySolve( rhs, J ) )
+    return false; // degenerate effective mass (e.g. both bodies static) - nothing to solve
+
   double J_len = J.limitLength( MAX_IMPULSE );
 
 #ifdef DEBUG_CONSERVATION_CHECKS
@@ -239,10 +241,10 @@ bool HingeJoint::solveAxisVelocity( double dt ) // returns true, if still has er
   double rhs1 = -(Cdot1 + bias1);
   double rhs2 = -(Cdot2 + bias2);
 
-  Vector3 Ig1A = objA->inertia_tensor_world_inv.multiplyByVector3( g1 );
-  Vector3 Ig2A = objA->inertia_tensor_world_inv.multiplyByVector3( g2 );
-  Vector3 Ig1B = objB->inertia_tensor_world_inv.multiplyByVector3( g1 );
-  Vector3 Ig2B = objB->inertia_tensor_world_inv.multiplyByVector3( g2 );
+  Vector3 Ig1A = objA->inertia_tensor_world_inv * g1;
+  Vector3 Ig2A = objA->inertia_tensor_world_inv * g2;
+  Vector3 Ig1B = objB->inertia_tensor_world_inv * g1;
+  Vector3 Ig2B = objB->inertia_tensor_world_inv * g2;
 
   double K11 = g1 * (Ig1A + Ig1B) + SOFTNESS;
   double K12 = g1 * (Ig2A + Ig2B);
@@ -310,7 +312,7 @@ bool HingeJoint::solveAnchorPosition()
   Vector3 rA = p - objA->center_of_mass_pos;
   Vector3 rB = p - objB->center_of_mass_pos;
 
-  Matrix K = computeAnchorEffectiveMass(
+  Mat3 K = computeAnchorEffectiveMass(
     objA->inv_mass,
     objB->inv_mass,
     rA,
@@ -320,7 +322,12 @@ bool HingeJoint::solveAnchorPosition()
   );
 
   // We need to reduce the error, hence RHS = -correction.
-  Vector3 impulse = K.solve3x3( -correction );
+  // K is symmetric positive definite - solve with the fast Cholesky path.
+  Vector3 impulse;
+  //if ( !K.trySolveSPD( -correction, impulse ) )
+  if ( !K.trySolve( -correction, impulse ) )
+    return false; // degenerate effective mass - nothing to correct
+
   double impulse_len = impulse.limitLength( MAX_IMPULSE );
 
   objA->applyPositionImpulseAtWorldPoint(  impulse, p );
@@ -356,10 +363,10 @@ bool HingeJoint::solveAxisPosition()
   double wB = 0.0;
 
   if ( !objA->isStatic() )
-    wA = dir * objA->inertia_tensor_world_inv.multiplyByVector3( dir );
+    wA = dir * ( objA->inertia_tensor_world_inv * dir );
 
   if ( !objB->isStatic() )
-    wB = dir * objB->inertia_tensor_world_inv.multiplyByVector3( dir );
+    wB = dir * ( objB->inertia_tensor_world_inv * dir );
 
   double sum_w = wA + wB;
   if ( sum_w < PHYS_EPSILON )

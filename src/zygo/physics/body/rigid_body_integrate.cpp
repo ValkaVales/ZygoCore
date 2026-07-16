@@ -63,13 +63,13 @@ void RigidBody::integrateVelocities( double dt )
 {
   center_of_mass_pos += speed * dt;
 
-  Vector3 L_spin = inertia_tensor_world.multiplyByVector3( angular_speed );
+  Vector3 L_spin = inertia_tensor_world * angular_speed;
 
   Quaternion q_old = rotation_quaternion;
-  Matrix I_old_inv = inertia_tensor_world_inv;
+  Mat3 I_old_inv = inertia_tensor_world_inv;
 
   // omega at the start of the step
-  Vector3 omega0 = I_old_inv.multiplyByVector3( L_spin );
+  Vector3 omega0 = I_old_inv * L_spin;
 
   // a trial half step
   Quaternion dq_half = Quaternion::calcRotationQuaternion_fromAngularVelocity( omega0, dt * 0.5 );
@@ -80,7 +80,7 @@ void RigidBody::integrateVelocities( double dt )
   updateWorldInertia();
 
   // omega at the middle of the step
-  Vector3 omega_mid = inertia_tensor_world_inv.multiplyByVector3( L_spin );
+  Vector3 omega_mid = inertia_tensor_world_inv * L_spin;
 
   // the full step, now using the midpoint omega
   rotation_quaternion = q_old;
@@ -91,7 +91,7 @@ void RigidBody::integrateVelocities( double dt )
   updateWorldInertia();
 
   // make omega consistent with the new tensor
-  angular_speed = inertia_tensor_world_inv.multiplyByVector3( L_spin );
+  angular_speed = inertia_tensor_world_inv * L_spin;
   syncAngularMomentumFromAngularSpeed();
 }
 #endif

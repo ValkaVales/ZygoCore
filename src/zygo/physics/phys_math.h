@@ -3,7 +3,7 @@
 // Math helpers of the physics engine: segment bases, inertia tensors.
 
 #include <zygo/math/quaternion/quaternion.h>
-#include <zygo/math/matrix/matrix.h>
+#include <zygo/math/matrix/small_fast_matrix/mat3.h>
 
 
 namespace zygo {
@@ -36,12 +36,18 @@ Quaternion buildQuaternionFromAxes(
   Vector3 const & z_axis
 );
 
+// Rotation matrix of the quaternion, as a fixed Mat3 (mirrors Quaternion::toRotationMatrix).
+Mat3 buildMat3FromQuaternion( Quaternion const & q );
+
+// Quaternion from a rotation Mat3 (mirrors Quaternion::fromRotationMatrix, Shepperd's method).
+Quaternion buildQuaternionFromMat3( Mat3 const & mat );
+
 // Parallel-axis (Steiner) term for translating an inertia tensor by d.
-Matrix calcParallelAxisTerm( double mass, Vector3 const & d );
+Mat3 calcParallelAxisTerm( double mass, Vector3 const & d );
 
 // Asserts that mat is a valid 3x3 inertia tensor: finite, symmetric, SPD.
 // det_eps should NOT be very small.
-void validateInertiaTensor( Matrix const & mat, double symmetry_eps = SMALL_EPSILON, double det_eps = 1e-14, double det_eps_small = 1e-18 );
+void validateInertiaTensor( Mat3 const & mat, double symmetry_eps = SMALL_EPSILON, double det_eps = 1e-14, double det_eps_small = 1e-18 );
 
 } // namespace phys
 } // namespace zygo

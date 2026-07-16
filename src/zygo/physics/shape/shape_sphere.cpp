@@ -9,20 +9,10 @@ ShapeSphere::ShapeSphere( double mass, Vector3 const & local_pos, Vector3 const 
 {
 }
 
-Matrix ShapeSphere::calcLocalInertiaTensorForPart() const
+Mat3 ShapeSphere::calcLocalInertiaTensorForPart() const
 {
-  Matrix I( 3, 3 );
-  I.makeAllZero();
-
   // Uniform solid sphere: I = 2/5 * m * r^2 about any axis.
-  double r = size.x;
-  double Ival = 0.4 * mass * r * r;
-
-  I.setAt( 0, Ival );
-  I.setAt( 4, Ival );
-  I.setAt( 8, Ival );
-
-  return I;
+  return Mat3::inertiaSphere( mass, size.x );
 }
 
 void ShapeSphere::draw( IPhysicsDrawer const& drawer, Vector3 const & obj_world_pos, Quaternion const & obj_world_rot ) const

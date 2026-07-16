@@ -3,7 +3,7 @@
 // Base class of collision/inertia shapes a RigidBody is assembled from.
 
 #include <zygo/math/quaternion/quaternion.h>
-#include <zygo/math/matrix/matrix.h>
+#include <zygo/math/matrix/small_fast_matrix/mat3.h>
 #include <zygo/physics/i_physics_drawer.h>
 
 
@@ -53,7 +53,7 @@ public:
 
   inline void addToLocalPos( Vector3 const & v ) { local_pos += v; }
 
-  virtual Matrix calcLocalInertiaTensorForPart() const = 0;
+  virtual Mat3 calcLocalInertiaTensorForPart() const = 0;
 
   //
   virtual Vector3 calcLocalCenterOfMass() const;

@@ -153,12 +153,7 @@ void RigidBody::addVerticalPlate(
 
   Vector3 center = (a + b) * 0.5;
 
-  Matrix rot( 3, 3 );
-  rot.setCol( 0, ex );
-  rot.setCol( 1, ey );
-  rot.setCol( 2, ez );
-
-  Quaternion q = Quaternion::fromRotationMatrix( rot );
+  Quaternion q = buildQuaternionFromAxes( ex, ey, ez );
 
   addShape( new ShapeBox( mass, center, size, q, color ) );
 }

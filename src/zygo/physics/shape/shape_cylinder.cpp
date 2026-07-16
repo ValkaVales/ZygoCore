@@ -12,36 +12,15 @@ ShapeCylinder::ShapeCylinder( double mass, Vector3 const & local_pos, Vector3 co
 {
 }
 
-Matrix ShapeCylinder::calcLocalInertiaTensorForPart() const
+Mat3 ShapeCylinder::calcLocalInertiaTensorForPart() const
 {
-  Matrix I( 3, 3 );
-  I.makeAllZero();
-
   // size.x = height, size.y = radius.
   // RigidBody::addCylinderBySegment() builds local_rot so that the cylinder axis is the local Z axis.
-  const double m = mass;
-  const double L = size.x;
-  const double r = size.y;
+  ZgAssert( mass   > BIG_EPSILON );
+  ZgAssert( size.x > BIG_EPSILON );
+  ZgAssert( size.y > BIG_EPSILON );
 
-  ZgAssert( m > BIG_EPSILON );
-  ZgAssert( L > BIG_EPSILON );
-  ZgAssert( r > BIG_EPSILON );
-
-  const double r2 = sqr( r );
-  const double L2 = sqr( L );
-
-  // Uniform solid cylinder with the axis along Z:
-  // Izz - about its own longitudinal axis;
-  // Ixx, Iyy - about the transverse axes through the center of mass.
-  const double Ixx = m * ( 3.0 * r2 + L2 ) / 12.0;
-  const double Iyy = Ixx;
-  const double Izz = 0.5 * m * r2;
-
-  I.setAt( 0, Ixx );
-  I.setAt( 4, Iyy );
-  I.setAt( 8, Izz );
-
-  return I;
+  return Mat3::inertiaCylinderZ( mass, size.y /*radius*/, size.x /*length*/ );
 }
 
 void ShapeCylinder::draw( IPhysicsDrawer const& drawer, Vector3 const & obj_world_pos, Quaternion const & obj_world_rot ) const

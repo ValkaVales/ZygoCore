@@ -151,8 +151,8 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
   // The bias must push toward C -> 0.
   double bias = ANGLE_LIMIT_BETA * C / dt;
 
-  Vector3 IAJwA = objA->inertia_tensor_world_inv.multiplyByVector3( JwA );
-  Vector3 IBJwB = objB->inertia_tensor_world_inv.multiplyByVector3( JwB );
+  Vector3 IAJwA = objA->inertia_tensor_world_inv * JwA;
+  Vector3 IBJwB = objB->inertia_tensor_world_inv * JwB;
 
   double K = JwA * IAJwA + JwB * IBJwB + ANGLE_LIMIT_SOFTNESS;
   if ( std::abs( K ) < PHYS_EPSILON )

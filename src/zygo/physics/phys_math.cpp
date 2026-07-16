@@ -59,106 +59,137 @@ Quaternion buildQuaternionFromAxes(
   Vector3 const & z_axis
 )
 {
-  Matrix m( 3, 3 );
-
   // Columns = the local basis axes in object coordinates.
-  m.set9(
-    x_axis.x, y_axis.x, z_axis.x,
-    x_axis.y, y_axis.y, z_axis.y,
-    x_axis.z, y_axis.z, z_axis.z
-  );
-
-  return Quaternion::fromRotationMatrix( m );
+  return buildQuaternionFromMat3( Mat3::fromColumns( x_axis, y_axis, z_axis ) );
 }
 
-Matrix calcParallelAxisTerm( double mass, Vector3 const & d )
+Mat3 buildMat3FromQuaternion( Quaternion const & q )
 {
-  Matrix res( 3, 3 );
-  res.makeAllZero();
+  // Mirrors Quaternion::toRotationMatrix(), but builds a fixed Mat3 without heap allocations.
+  Real s = q.getS();
+  Vector3 v = q.getV();
 
-  double x = d.x;
-  double y = d.y;
-  double z = d.z;
+  Real sx = s * v.x;
+  Real sy = s * v.y;
+  Real sz = s * v.z;
+
+  Real xx = v.x * v.x;
+  Real yy = v.y * v.y;
+  Real zz = v.z * v.z;
+
+  Real xy = v.x * v.y;
+  Real xz = v.x * v.z;
+  Real yz = v.y * v.z;
+
+  return Mat3(
+    REAL_ONE - REAL_TWO * (yy + zz),  REAL_TWO * (xy - sz),             REAL_TWO * (xz + sy),
+    REAL_TWO * (xy + sz),             REAL_ONE - REAL_TWO * (xx + zz),  REAL_TWO * (yz - sx),
+    REAL_TWO * (xz - sy),             REAL_TWO * (yz + sx),             REAL_ONE - REAL_TWO * (xx + yy)
+  );
+}
+
+Quaternion buildQuaternionFromMat3( Mat3 const & mat )
+{
+  // Mirrors Quaternion::fromRotationMatrix() (Shepperd's method), but takes a Mat3.
+  Real m00 = mat.m[0];
+  Real m01 = mat.m[1];
+  Real m02 = mat.m[2];
+
+  Real m10 = mat.m[3];
+  Real m11 = mat.m[4];
+  Real m12 = mat.m[5];
+
+  Real m20 = mat.m[6];
+  Real m21 = mat.m[7];
+  Real m22 = mat.m[8];
+
+  Real trace = m00 + m11 + m22;
+
+  Real s, x, y, z;
+
+  if ( trace > REAL_ZERO )
+  {
+    Real t = std::sqrt( trace + REAL_ONE );
+    s = REAL_HALF * t;
+
+    Real inv4s = REAL_ONE / ( REAL_TWO * t ); // = 1 / (4*s)
+
+    x = ( m21 - m12 ) * inv4s;
+    y = ( m02 - m20 ) * inv4s;
+    z = ( m10 - m01 ) * inv4s;
+  } else
+  if ( m00 > m11 && m00 > m22 )
+  {
+    Real t = std::sqrt( REAL_ONE + m00 - m11 - m22 );
+    x = REAL_HALF * t;
+
+    Real inv4x = REAL_ONE / ( REAL_TWO * t ); // = 1 / (4*x)
+
+    s = ( m21 - m12 ) * inv4x;
+    y = ( m01 + m10 ) * inv4x;
+    z = ( m02 + m20 ) * inv4x;
+  } else
+  if ( m11 > m22 )
+  {
+    Real t = std::sqrt( REAL_ONE + m11 - m00 - m22 );
+    y = REAL_HALF * t;
+
+    Real inv4y = REAL_ONE / ( REAL_TWO * t ); // = 1 / (4*y)
+
+    s = ( m02 - m20 ) * inv4y;
+    x = ( m01 + m10 ) * inv4y;
+    z = ( m12 + m21 ) * inv4y;
+  } else
+  {
+    Real t = std::sqrt( REAL_ONE + m22 - m00 - m11 );
+    z = REAL_HALF * t;
+
+    Real inv4z = REAL_ONE / ( REAL_TWO * t ); // = 1 / (4*z)
+
+    s = ( m10 - m01 ) * inv4z;
+    x = ( m02 + m20 ) * inv4z;
+    y = ( m12 + m21 ) * inv4z;
+  }
+
+  Quaternion q( s, Vector3( x, y, z ) );
+  q.normalize();
+
+  return q;
+}
+
+Mat3 calcParallelAxisTerm( double mass, Vector3 const & d )
+{
+  // Steiner: I_shift = m * ( (d . d) * E  -  d * d^T )
   double d2 = d.lengthSqr();
 
-  res.setAt( 0, mass * ( d2 - x*x ) );
-  res.setAt( 1, mass * (    - x*y ) );
-  res.setAt( 2, mass * (    - x*z ) );
-
-  res.setAt( 3, mass * (    - x*y ) );
-  res.setAt( 4, mass * ( d2 - y*y ) );
-  res.setAt( 5, mass * (    - y*z ) );
-
-  res.setAt( 6, mass * (    - x*z ) );
-  res.setAt( 7, mass * (    - y*z ) );
-  res.setAt( 8, mass * ( d2 - z*z ) );
-
-  return res;
+  return ( Mat3::identity() * d2 - Mat3::outerProduct( d, d ) ) * mass;
 }
 
-void validateInertiaTensor( Matrix const & mat, double symmetry_eps, double det_eps, double det_eps_small )
+void validateInertiaTensor( Mat3 const & mat, double symmetry_eps, double det_eps, double det_eps_small )
 {
-  ZgAssert( mat.dimX() == 3 && mat.dimY() == 3 );
-
-  double a00 = mat.get( 0, 0 );
-  double a01 = mat.get( 0, 1 );
-  double a02 = mat.get( 0, 2 );
-  double a10 = mat.get( 1, 0 );
-  double a11 = mat.get( 1, 1 );
-  double a12 = mat.get( 1, 2 );
-  double a20 = mat.get( 2, 0 );
-  double a21 = mat.get( 2, 1 );
-  double a22 = mat.get( 2, 2 );
-
   // 1) All elements are finite.
-  ZgAssert( std::isfinite( a00 ) );
-  ZgAssert( std::isfinite( a01 ) );
-  ZgAssert( std::isfinite( a02 ) );
-  ZgAssert( std::isfinite( a10 ) );
-  ZgAssert( std::isfinite( a11 ) );
-  ZgAssert( std::isfinite( a12 ) );
-  ZgAssert( std::isfinite( a20 ) );
-  ZgAssert( std::isfinite( a21 ) );
-  ZgAssert( std::isfinite( a22 ) );
+  ZgAssert( mat.isFinite() );
 
   // 2) Symmetry.
-  ZgAssert( std::abs( a01 - a10 ) <= symmetry_eps );
-  ZgAssert( std::abs( a02 - a20 ) <= symmetry_eps );
-  ZgAssert( std::abs( a12 - a21 ) <= symmetry_eps );
+  ZgAssert( mat.isSymmetric( symmetry_eps ) );
 
   // 3) Positive diagonal.
-  ZgAssert( a00 > 0.0 );
-  ZgAssert( a11 > 0.0 );
-  ZgAssert( a22 > 0.0 );
+  ZgAssert( mat.m[0] > 0.0 );
+  ZgAssert( mat.m[4] > 0.0 );
+  ZgAssert( mat.m[8] > 0.0 );
 
   // 4) Sylvester's criterion for an SPD matrix.
-  ZgAssert( a00 > det_eps ); // first leading minor
+  ZgAssert( mat.m[0] > det_eps ); // first leading minor
 
-  double det2x2 = a00 * a11 - a01 * a10; // second leading minor
+  double det2x2 = mat.m[0] * mat.m[4] - mat.m[1] * mat.m[3]; // second leading minor
   ZgAssert( det2x2 > det_eps );
 
-  double det3x3 =
-      a00 * ( a11 * a22 - a12 * a21 )
-    - a01 * ( a10 * a22 - a12 * a20 )
-    + a02 * ( a10 * a21 - a11 * a20 );
-
+  double det3x3 = mat.determinant();
   ZgAssert( det3x3 > det_eps_small );
 
   // 5) A very rough check that the matrix is not almost degenerate
   //    (the determinant threshold is scaled by the magnitude of the elements).
-  double max_abs = std::max(
-    std::max( std::abs( a00 ), std::abs( a01 ) ),
-    std::max(
-      std::max( std::abs( a02 ), std::abs( a10 ) ),
-      std::max(
-        std::max( std::abs( a11 ), std::abs( a12 ) ),
-        std::max( std::abs( a20 ),
-          std::max( std::abs( a21 ), std::abs( a22 ) )
-        )
-      )
-    )
-  );
-
+  double max_abs = mat.maxAbsElement();
   double coeff = std::max( 1.0, max_abs * max_abs * max_abs );
   double scaled_det_eps = det_eps_small * coeff;
   ZgAssert( std::abs( det3x3 ) > scaled_det_eps );

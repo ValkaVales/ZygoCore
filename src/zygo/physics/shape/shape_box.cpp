@@ -10,27 +10,10 @@ ShapeBox::ShapeBox( double mass, Vector3 const & local_pos, Vector3 const & size
 {
 }
 
-Matrix ShapeBox::calcLocalInertiaTensorForPart() const
+Mat3 ShapeBox::calcLocalInertiaTensorForPart() const
 {
-  Matrix I( 3, 3 );
-  I.makeAllZero();
-
-  double m = mass;
-
-  double a2 = sqr( size.x );
-  double b2 = sqr( size.y );
-  double c2 = sqr( size.z );
-
   // Uniform box.
-  double Ixx = m * ( b2 + c2 ) / 12.0;
-  double Iyy = m * ( a2 + c2 ) / 12.0;
-  double Izz = m * ( a2 + b2 ) / 12.0;
-
-  I.setAt( 0, Ixx );
-  I.setAt( 4, Iyy );
-  I.setAt( 8, Izz );
-
-  return I;
+  return Mat3::inertiaBox( mass, size.x, size.y, size.z );
 }
 
 void ShapeBox::draw( IPhysicsDrawer const& drawer, Vector3 const & obj_world_pos, Quaternion const & obj_world_rot ) const

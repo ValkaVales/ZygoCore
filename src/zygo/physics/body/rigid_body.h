@@ -4,7 +4,7 @@
 // The construction API takes grams/millimeters; everything else is SI (see physics.h).
 
 #include <zygo/physics/shape/shape.h>
-#include <zygo/math/matrix/matrix.h>
+#include <zygo/math/matrix/small_fast_matrix/mat3.h>
 #include <zygo/math/quaternion/quaternion.h>
 #include <memory>
 #include <vector>
@@ -34,10 +34,10 @@ private:
   uint color;
 
   // Inertia tensors.
-  Matrix inertia_tensor_local;
-  Matrix inertia_tensor_local_inv;
-  Matrix inertia_tensor_world;
-  Matrix inertia_tensor_world_inv;
+  Mat3 inertia_tensor_local;
+  Mat3 inertia_tensor_local_inv;
+  Mat3 inertia_tensor_world;
+  Mat3 inertia_tensor_world_inv;
 
 public:
   explicit RigidBody( uint color );

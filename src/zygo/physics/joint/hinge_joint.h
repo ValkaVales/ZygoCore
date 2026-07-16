@@ -4,7 +4,6 @@
 // with optional angle limits and a velocity/position motor.
 
 #include <zygo/math/vector/vec3.h>
-#include <zygo/math/matrix/matrix.h>
 #include <zygo/physics/joint/joint_limits.h>
 #include <zygo/physics/i_physics_drawer.h>
 

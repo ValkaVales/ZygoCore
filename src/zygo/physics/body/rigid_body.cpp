@@ -16,15 +16,11 @@ RigidBody::RigidBody( uint color )
   , inv_mass    ( 0.0 )
   , color       ( color )
 
-  , inertia_tensor_local    ( 3, 3 )
-  , inertia_tensor_local_inv( 3, 3 )
-  , inertia_tensor_world    ( 3, 3 )
-  , inertia_tensor_world_inv( 3, 3 )
+  , inertia_tensor_local    ( Mat3::zero() )
+  , inertia_tensor_local_inv( Mat3::zero() )
+  , inertia_tensor_world    ( Mat3::zero() )
+  , inertia_tensor_world_inv( Mat3::zero() )
 {
-  inertia_tensor_local    .makeAllZero();
-  inertia_tensor_local_inv.makeAllZero();
-  inertia_tensor_world    .makeAllZero();
-  inertia_tensor_world_inv.makeAllZero();
 }
 
 void RigidBody::clearGeometry()
@@ -34,10 +30,10 @@ void RigidBody::clearGeometry()
   total_mass = 0.0;
   inv_mass = 0.0;
 
-  inertia_tensor_local    .makeAllZero();
-  inertia_tensor_local_inv.makeAllZero();
-  inertia_tensor_world    .makeAllZero();
-  inertia_tensor_world_inv.makeAllZero();
+  inertia_tensor_local     = Mat3::zero();
+  inertia_tensor_local_inv = Mat3::zero();
+  inertia_tensor_world     = Mat3::zero();
+  inertia_tensor_world_inv = Mat3::zero();
 
   center_of_mass_pos.reset();
   speed             .reset();
@@ -53,11 +49,10 @@ void RigidBody::normalizeQuaternion()
 
 void RigidBody::updateWorldInertia()
 {
-  Matrix R = rotation_quaternion.toRotationMatrix();
-  Matrix Rt = R.transpose();
+  Mat3 R = buildMat3FromQuaternion( rotation_quaternion );
 
-  inertia_tensor_world     = R * inertia_tensor_local     * Rt;
-  inertia_tensor_world_inv = R * inertia_tensor_local_inv * Rt;
+  inertia_tensor_world     = ( R * inertia_tensor_local     ).mulTransposedRight( R );
+  inertia_tensor_world_inv = ( R * inertia_tensor_local_inv ).mulTransposedRight( R );
 
   syncAngularMomentumFromAngularSpeed();
 }
@@ -104,7 +99,7 @@ void RigidBody::applyPositionImpulseAtWorldPoint( Vector3 const & impulse, Vecto
   center_of_mass_pos += impulse * inv_mass;
 
   Vector3 moment_of_impulse = r.crossProduct( impulse );
-  Vector3 angular_correction = inertia_tensor_world_inv.multiplyByVector3( moment_of_impulse );
+  Vector3 angular_correction = inertia_tensor_world_inv * moment_of_impulse;
 
   angular_correction.limitLength( MAX_POSITION_ANGULAR_CORRECTION );
 
@@ -148,7 +143,7 @@ void RigidBody::applyAngularImpulse( Vector3 const & angular_impulse )
   if ( isStatic() )
     return;
 
-  Vector3 mul = inertia_tensor_world_inv.multiplyByVector3( angular_impulse );
+  Vector3 mul = inertia_tensor_world_inv * angular_impulse;
   angular_speed += mul;
 
   syncAngularMomentumFromAngularSpeed();
@@ -183,7 +178,7 @@ double RigidBody::invEffectiveMassAlong( Vector3 const & world_point, Vector3 co
 
   Vector3 r     = world_point - center_of_mass_pos;
   Vector3 rxd   = r.crossProduct( dir );
-  Vector3 I_rxd = inertia_tensor_world_inv.multiplyByVector3( rxd );
+  Vector3 I_rxd = inertia_tensor_world_inv * rxd;
 
   return inv_mass + rxd * I_rxd; // dot
 }
@@ -225,10 +220,10 @@ void RigidBody::rebuildPhysicalParameters_afterAllShapesAdded() // should be cal
   total_mass  = 0.0;
   inv_mass    = 0.0;
 
-  inertia_tensor_local    .makeAllZero();
-  inertia_tensor_local_inv.makeAllZero();
-  inertia_tensor_world    .makeAllZero();
-  inertia_tensor_world_inv.makeAllZero();
+  inertia_tensor_local     = Mat3::zero();
+  inertia_tensor_local_inv = Mat3::zero();
+  inertia_tensor_world     = Mat3::zero();
+  inertia_tensor_world_inv = Mat3::zero();
 
   if ( shapes.empty() )
     return;
@@ -251,24 +246,23 @@ void RigidBody::rebuildPhysicalParameters_afterAllShapesAdded() // should be cal
     if ( shape.get() == nullptr )
       continue;
 
-    Matrix I_part_local = shape->calcLocalInertiaTensorForPart();
+    Mat3 I_part_local = shape->calcLocalInertiaTensorForPart();
 
     // The rotation of the shape inside the body.
-    Matrix R = shape->localRot().toRotationMatrix();
-    Matrix Rt = R.transpose();
+    Mat3 R = buildMat3FromQuaternion( shape->localRot() );
 
     // Rotate the tensor into the local frame of the body.
-    Matrix I_part_rotated = R * I_part_local * Rt;
+    Mat3 I_part_rotated = ( R * I_part_local ).mulTransposedRight( R );
 
     // Add the parallel-axis (Steiner) translation.
     Vector3 d = shape->localPos(); // after the shift this is already the vector from the body COM
-    Matrix I_shift = calcParallelAxisTerm( shape->getMass(), d );
+    Mat3 I_shift = calcParallelAxisTerm( shape->getMass(), d );
 
     inertia_tensor_local += I_part_rotated;
     inertia_tensor_local += I_shift;
   }
 
-  inertia_tensor_local_inv = inertia_tensor_local.inverse3x3();
+  inertia_tensor_local_inv = inertia_tensor_local.inversed();
 
   validateInertiaTensor( inertia_tensor_local );
   validateInertiaTensor( inertia_tensor_local_inv );
@@ -279,10 +273,10 @@ void RigidBody::rebuildPhysicalParameters_afterAllShapesAdded() // should be cal
 
 Vector3 RigidBody::calcOmegaBodyDerivative( Vector3 const & omega_body, Vector3 const & torque_body ) const
 {
-  Vector3 Iw = inertia_tensor_local.multiplyByVector3( omega_body );
+  Vector3 Iw = inertia_tensor_local * omega_body;
   Vector3 gyro = omega_body.crossProduct( Iw );
   Vector3 rhs = torque_body - gyro;
-  return inertia_tensor_local_inv.multiplyByVector3( rhs );
+  return inertia_tensor_local_inv * rhs;
 }
 
 void RigidBody::calcMainPhysicalParameters(
@@ -298,14 +292,14 @@ void RigidBody::calcMainPhysicalParameters(
   Vector3 r = center_of_mass_pos - total_center_of_mass_pos;
 
   Vector3 orbital_angular_momentum = r.crossProduct( momentum );
-  Vector3 spin_angular_momentum = inertia_tensor_world.multiplyByVector3( angular_speed );
+  Vector3 spin_angular_momentum = inertia_tensor_world * angular_speed;
 
   angular_momentum = orbital_angular_momentum + spin_angular_momentum;
 
   // 3. Kinetic energy.
   double translational_energy = 0.5 * total_mass * speed.lengthSqr();
 
-  Vector3 Iw = inertia_tensor_world.multiplyByVector3( angular_speed );
+  Vector3 Iw = inertia_tensor_world * angular_speed;
   double rotational_energy = 0.5 * (angular_speed * Iw); // dot product
 
   kinetic_energy = translational_energy + rotational_energy;

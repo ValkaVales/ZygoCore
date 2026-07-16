@@ -12,11 +12,8 @@ ShapeCapsule::ShapeCapsule( double mass, Vector3 const & local_pos, double cylin
 {
 }
 
-Matrix ShapeCapsule::calcLocalInertiaTensorForPart() const
+Mat3 ShapeCapsule::calcLocalInertiaTensorForPart() const
 {
-  Matrix I( 3, 3 );
-  I.makeAllZero();
-
   // The capsule axis is the local Z axis, like the cylinder
   // (RigidBody::addCapsuleBySegment() builds local_rot that way, and gl::drawCapsule draws along the local Z as well).
   const double m = mass;
@@ -61,11 +58,11 @@ Matrix ShapeCapsule::calcLocalInertiaTensorForPart() const
   const double Ixx_hemis = 2.0 * ( Ixx_hemi_centroid + mh * d * d );
   const double Iyy_hemis = 2.0 * ( Iyy_hemi_centroid + mh * d * d );
 
-  I.setAt( 0, Ixx_cyl + Ixx_hemis );
-  I.setAt( 4, Iyy_cyl + Iyy_hemis );
-  I.setAt( 8, Izz_cyl + Izz_hemis );
-
-  return I;
+  return Mat3::diagonal(
+    Ixx_cyl + Ixx_hemis,
+    Iyy_cyl + Iyy_hemis,
+    Izz_cyl + Izz_hemis
+  );
 }
 
 void ShapeCapsule::draw( IPhysicsDrawer const& drawer, Vector3 const & obj_world_pos, Quaternion const & obj_world_rot ) const

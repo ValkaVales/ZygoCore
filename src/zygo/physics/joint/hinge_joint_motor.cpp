@@ -124,8 +124,8 @@ double HingeJoint::hingeAngularMassInv() const
 {
   Vector3 axis = worldAxisA();
 
-  Vector3 IA = objA->inertia_tensor_world_inv.multiplyByVector3( axis );
-  Vector3 IB = objB->inertia_tensor_world_inv.multiplyByVector3( axis );
+  Vector3 IA = objA->inertia_tensor_world_inv * axis;
+  Vector3 IB = objB->inertia_tensor_world_inv * axis;
 
   return axis * IA + axis * IB;
 }

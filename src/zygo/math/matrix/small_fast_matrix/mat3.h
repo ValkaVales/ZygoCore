@@ -230,15 +230,21 @@ struct Mat3 final
   // ------------------------------------------------------------
   // Access
   // ------------------------------------------------------------
-
-  Real& operator()( int row, int col ) noexcept
+/*
+  Real& operator[] ( int idx ) noexcept
+  {
+    ZgAssert( idx >= 0 && idx < 9 );
+    return m[idx];
+  }
+*/
+  Real& operator() ( int row, int col ) noexcept
   {
     ZgAssert( row >= 0 && row < 3 );
     ZgAssert( col >= 0 && col < 3 );
     return m[row * 3 + col];
   }
 
-  Real operator()( int row, int col ) const noexcept
+  Real operator() ( int row, int col ) const noexcept
   {
     ZgAssert( row >= 0 && row < 3 );
     ZgAssert( col >= 0 && col < 3 );
@@ -339,7 +345,7 @@ struct Mat3 final
     return (*this) *= inv;
   }
 
-  friend Mat3 operator*(Real s, const Mat3& a) noexcept
+  friend Mat3 operator* (Real s, const Mat3& a) noexcept
   {
     return a * s;
   }
@@ -348,7 +354,7 @@ struct Mat3 final
   // Matrix * Vector
   // ------------------------------------------------------------
 
-  Vector3 operator*(const Vector3& v) const noexcept
+  Vector3 operator* ( const Vector3& v ) const noexcept
   {
     return Vector3(
       m[0] * v.x + m[1] * v.y + m[2] * v.z,
@@ -358,7 +364,7 @@ struct Mat3 final
   }
 
   // this^T * v
-  Vector3 transposedMul(const Vector3& v) const noexcept
+  Vector3 transposedMul( const Vector3& v ) const noexcept
   {
     return Vector3(
       m[0] * v.x + m[3] * v.y + m[6] * v.z,
