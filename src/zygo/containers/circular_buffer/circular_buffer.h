@@ -39,6 +39,37 @@ public:
     ZgAssertRelease( capacity > 0 );
   }
 
+  // Rule of Five.
+  ~CircularBuffer() = default;
+
+  CircularBuffer            ( CircularBuffer const& ) = default;
+  CircularBuffer& operator= ( CircularBuffer const& ) = default;
+
+  CircularBuffer( CircularBuffer&& other ) noexcept
+    : CircularBufferBase( std::move(other) )
+    , data( std::move(other.data) )
+    , total_sum( std::exchange(other.total_sum, SumType(0)) )
+  {
+    // A moved-from std::vector is valid but not formally guaranteed to be empty.
+    // Clear it explicitly so that data.size() matches the zeroed base capacity.
+    other.data.clear();
+  }
+
+  CircularBuffer& operator=( CircularBuffer&& other ) noexcept
+  {
+    if ( this == &other )
+      return *this;
+
+    CircularBufferBase::operator= ( std::move(other) );
+
+    total_sum = std::exchange( other.total_sum, SumType(0) );
+
+    data = std::move( other.data );
+    other.data.clear();
+    return *this;
+  }
+
+  //
   void clear() noexcept
   {
     clearBase();
@@ -49,10 +80,12 @@ public:
   // If the buffer is full, the oldest value is overwritten.
   void push( T value ) noexcept
   {
+    ZgAssertRelease( !data.empty() );
+
     if ( isFull() )
     {
       total_sum -= static_cast<SumType>( data[getFirst()] );
-      elemPoped();
+      elemPopped();
     }
 
     const SizeType index = elemPushed();
@@ -70,7 +103,7 @@ public:
     const T result = data[getFirst()];
     total_sum -= static_cast<SumType>( result );
 
-    elemPoped();
+    elemPopped();
     return result;
   }
 

@@ -34,11 +34,33 @@ public:
   }
 
   // Rule of five
-  //CircularBufferForObjects( CircularBufferForObjects const& )            = default;
-  //CircularBufferForObjects& operator=( CircularBufferForObjects const& ) = default;
-  //CircularBufferForObjects( CircularBufferForObjects&& )            noexcept = default;
-  //CircularBufferForObjects& operator=( CircularBufferForObjects&& ) noexcept = default;
+  // Copy operations are usable when T itself is copyable.
+  ~CircularBufferForObjects() = default;
 
+  CircularBufferForObjects            ( CircularBufferForObjects const& ) = default;
+  CircularBufferForObjects& operator= ( CircularBufferForObjects const& ) = default;
+
+  CircularBufferForObjects( CircularBufferForObjects&& other ) noexcept
+    : CircularBufferBase( std::move(other) )
+    , data( std::move(other.data) )
+  {
+    // Keep the moved-from object fully consistent with capacity() == 0.
+    other.data.clear();
+  }
+
+  CircularBufferForObjects& operator=( CircularBufferForObjects&& other ) noexcept
+  {
+    if ( this == &other )
+      return *this;
+
+    CircularBufferBase::operator= ( std::move(other) );
+
+    data = std::move( other.data );
+    other.data.clear();
+    return *this;
+  }
+
+  //
   void clear() noexcept
   {
     for ( SizeType i = 0; i < getCount(); ++i )
@@ -107,7 +129,7 @@ private:
     ZgAssertRelease( !isEmpty() );
 
     data[getFirst()].reset();
-    elemPoped();
+    elemPopped();
   }
 };
 
