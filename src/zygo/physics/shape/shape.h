@@ -37,7 +37,7 @@ protected:
   // size layout per type:
   // BOX:      size_x = length, size_y = width,  size_z = height
   // CYLINDER: size_x = height, size_y = radius, size_z unused (axis along local Z)
-  // CAPSULE:  size_x = size_y = radius, size_z = cylinder length (axis along local X)
+  // CAPSULE:  size_x = size_y = radius, size_z = cylinder length (axis along local Z, like the cylinder)
   // SPHERE:   size_x = radius, the rest unused
 
 public:

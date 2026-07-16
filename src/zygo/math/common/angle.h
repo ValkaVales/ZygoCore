@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zygo/core/types.h>
+#include <zygo/math/common/scalar.h>
 #include "consts.h"
 
 

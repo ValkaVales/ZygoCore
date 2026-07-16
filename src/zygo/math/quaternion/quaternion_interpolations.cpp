@@ -1,5 +1,6 @@
 #include "quaternion.h"
 #include <zygo/core/assert.h>
+#include <zygo/math/common/scalar.h>
 #include <cmath>
 
 
@@ -11,6 +12,7 @@ Quaternion Quaternion::linearInterpolation( Quaternion const & q1, Quaternion co
 
   Real ratio1 = REAL_ONE - ratio;
   Quaternion res = (q1 * ratio1) + (q2 * ratio);
+  //res.normalize(); // may be excluded for performance
   return res;
 }
 
@@ -35,6 +37,8 @@ Quaternion Quaternion::sphericalInterpolation( Quaternion const& q1, Quaternion 
     return linearInterpolation( q1, q2, ratio );
 
   // Spherical interpolation (Essential Mathematics, page 467. Or Graphics Gems III, page 96)
+  toRange( cosa, -REAL_ONE, REAL_ONE );
+
   Real angle    = std::acos( cosa );
   Real phi      = angle + PI * spin_count;
   Real inv_sina = REAL_ONE / std::sin( angle ); // sina may be calculated from cosa (but it will be slower)
@@ -43,6 +47,7 @@ Quaternion Quaternion::sphericalInterpolation( Quaternion const& q1, Quaternion 
   Real inv_scale  = std::sin(         phi * ratio ) * inv_sina;
 
   Quaternion res = (q1 * scale) + (q2 * inv_scale);
+  res.normalize(); // may be excluded for performance
   return res;
 }
 

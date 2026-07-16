@@ -10,7 +10,18 @@ namespace zygo {
 namespace phys {
 
 // Orthonormal basis with the X axis along the segment p1 -> p2.
-void buildSegmentBasis(
+// Used for boxes (size.x = length lies along the segment).
+void buildSegmentBasisX(
+  Vector3 const & p1,
+  Vector3 const & p2,
+  Vector3 & x_axis,
+  Vector3 & y_axis,
+  Vector3 & z_axis
+);
+
+// Orthonormal basis with the Z axis along the segment p1 -> p2.
+// Used for cylinders and capsules (their axis is the local Z, matching the GLUT/ZygoGL drawing convention).
+void buildSegmentBasisZ(
   Vector3 const & p1,
   Vector3 const & p2,
   Vector3 & x_axis,

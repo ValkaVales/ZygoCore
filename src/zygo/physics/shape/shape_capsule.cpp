@@ -17,7 +17,8 @@ Matrix ShapeCapsule::calcLocalInertiaTensorForPart() const
   Matrix I( 3, 3 );
   I.makeAllZero();
 
-  // The capsule axis is the local X axis (RigidBody::addCapsuleBySegment() builds local_rot that way).
+  // The capsule axis is the local Z axis, like the cylinder
+  // (RigidBody::addCapsuleBySegment() builds local_rot that way, and gl::drawCapsule draws along the local Z as well).
   const double m = mass;
   const double r = size.x;   // radius
   const double L = size.z;   // cylinder length
@@ -37,28 +38,28 @@ Matrix ShapeCapsule::calcLocalInertiaTensorForPart() const
   const double mc = m * ( Vc / Vtotal );   // cylinder mass
   const double mh = m * ( Vh / Vtotal );   // one hemisphere mass
 
-  // ----- 1) Cylinder (axis along X) -----
-  const double Ixx_cyl = 0.5 * mc * r * r;
-  const double Iyy_cyl = mc * ( 3.0 * r * r + L * L ) / 12.0;
-  const double Izz_cyl = Iyy_cyl;
+  // ----- 1) Cylinder (axis along Z) -----
+  const double Izz_cyl = 0.5 * mc * r * r;
+  const double Ixx_cyl = mc * ( 3.0 * r * r + L * L ) / 12.0;
+  const double Iyy_cyl = Ixx_cyl;
 
   // ----- 2) Hemispheres -----
   // The center of mass of a hemisphere lies 3r/8 from the flat cut along the symmetry axis.
   // Distance from the capsule center to the center of mass of each hemisphere:
   const double d = L * 0.5 + 3.0 * r / 8.0;
 
-  // Hemisphere about its symmetry axis (X), through its own center of mass:
-  const double Ixx_hemi_centroid = ( 2.0 / 5.0 ) * mh * r * r;
+  // Hemisphere about its symmetry axis (Z), through its own center of mass:
+  const double Izz_hemi_centroid = ( 2.0 / 5.0 ) * mh * r * r;
 
-  // Hemisphere about a transverse axis (Y or Z), through its own center of mass:
-  const double Iyy_hemi_centroid = ( 83.0 / 320.0 ) * mh * r * r;
-  const double Izz_hemi_centroid = Iyy_hemi_centroid;
+  // Hemisphere about a transverse axis (X or Y), through its own center of mass:
+  const double Ixx_hemi_centroid = ( 83.0 / 320.0 ) * mh * r * r;
+  const double Iyy_hemi_centroid = Ixx_hemi_centroid;
 
   // Translate to the capsule center.
-  // No addition for Ixx: the translation is along the same X axis.
-  const double Ixx_hemis = 2.0 * Ixx_hemi_centroid;
+  // No addition for Izz: the translation is along the same Z axis.
+  const double Izz_hemis = 2.0 * Izz_hemi_centroid;
+  const double Ixx_hemis = 2.0 * ( Ixx_hemi_centroid + mh * d * d );
   const double Iyy_hemis = 2.0 * ( Iyy_hemi_centroid + mh * d * d );
-  const double Izz_hemis = 2.0 * ( Izz_hemi_centroid + mh * d * d );
 
   I.setAt( 0, Ixx_cyl + Ixx_hemis );
   I.setAt( 4, Iyy_cyl + Iyy_hemis );

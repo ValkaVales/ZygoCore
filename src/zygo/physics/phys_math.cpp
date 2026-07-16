@@ -8,7 +8,7 @@
 namespace zygo {
 namespace phys {
 
-void buildSegmentBasis(
+void buildSegmentBasisX(
   Vector3 const & p1,
   Vector3 const & p2,
   Vector3 & x_axis,
@@ -30,6 +30,27 @@ void buildSegmentBasis(
 
   y_axis = Vector3::safeNormalized( tmp );
   z_axis = Vector3::safeNormalized( x_axis.crossProduct( y_axis ) );
+}
+
+void buildSegmentBasisZ(
+  Vector3 const & p1,
+  Vector3 const & p2,
+  Vector3 & x_axis,
+  Vector3 & y_axis,
+  Vector3 & z_axis
+)
+{
+  z_axis = Vector3::safeNormalized( p2 - p1 );
+
+  // Pick a helper vector not parallel to the axis.
+  Vector3 helper;
+  if ( std::abs( z_axis.z ) < 0.9 )
+    helper = Vector3( 0.0, 0.0, 1.0 );
+  else
+    helper = Vector3( 1.0, 0.0, 0.0 ); // the segment is (almost) vertical
+
+  x_axis = Vector3::safeNormalized( helper.crossProduct( z_axis ) );
+  y_axis = Vector3::safeNormalized( z_axis.crossProduct( x_axis ) );
 }
 
 Quaternion buildQuaternionFromAxes(

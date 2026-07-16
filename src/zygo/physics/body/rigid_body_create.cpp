@@ -41,7 +41,7 @@ void RigidBody::addBoxBySegment(
   ZgAssert( height > BIG_EPSILON );
 
   Vector3 x_axis, y_axis, z_axis;
-  buildSegmentBasis( p1, p2, x_axis, y_axis, z_axis );
+  buildSegmentBasisX( p1, p2, x_axis, y_axis, z_axis );
 
   Vector3 size( length, width, height );
 
@@ -70,8 +70,9 @@ void RigidBody::addCapsuleBySegment(
   ZgAssert( radius > BIG_EPSILON );
   ZgAssert( cylinder_len > BIG_EPSILON );
 
+  // The capsule axis is the local Z, like the cylinder.
   Vector3 x_axis, y_axis, z_axis;
-  buildSegmentBasis( p1, p2, x_axis, y_axis, z_axis );
+  buildSegmentBasisZ( p1, p2, x_axis, y_axis, z_axis );
 
   Quaternion q = buildQuaternionFromAxes( x_axis, y_axis, z_axis );
 
@@ -180,27 +181,10 @@ void RigidBody::addCylinderBySegment(
   ZgAssert( height > BIG_EPSILON );
   ZgAssert( diameter > BIG_EPSILON );
 
-  Vector3 ez = axis / height;   // the local Z of the cylinder, in the world
+  Vector3 ex, ey, ez;
+  buildSegmentBasisZ( p1, p2, ex, ey, ez );
 
-  // Pick a helper vector not parallel to ez.
-  Vector3 helper;
-  if ( std::abs( ez.z ) < 0.9 )
-    helper = Vector3( 0.0, 0.0, 1.0 );
-  else
-    helper = Vector3( 1.0, 0.0, 0.0 );
-
-  Vector3 ex = helper.crossProduct( ez );
-  ex = Vector3::safeNormalized( ex );
-
-  Vector3 ey = ez.crossProduct( ex );
-  ey = Vector3::safeNormalized( ey );
-
-  Matrix rot( 3, 3 );
-  rot.setCol( 0, ex );
-  rot.setCol( 1, ey );
-  rot.setCol( 2, ez );
-
-  Quaternion q = Quaternion::fromRotationMatrix( rot );
+  Quaternion q = buildQuaternionFromAxes( ex, ey, ez );
   Vector3 center = (p1 + p2) * 0.5;
 
   Vector3 size( height, diameter * 0.5, 0.0 );

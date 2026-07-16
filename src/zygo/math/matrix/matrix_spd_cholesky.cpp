@@ -17,6 +17,10 @@ namespace zygo {
 // Incidentally, this is the cheapest practical test for positive definiteness.
 //
 // Pivot selection is not necessary: ​​for SPD matrices, the method is inherently stable.
+//
+// NOTE: Matrix symmetry is validated only in DEBUG builds.
+// In release builds, symmetry is a caller precondition and the check is intentionally omitted to avoid its runtime cost.
+// Positive-definiteness is still validated by the Cholesky decomposition itself.
 bool Matrix::tryCholesky( Matrix& L, Real eps ) const
 {
   ZgAssert( dimx == dimy );
