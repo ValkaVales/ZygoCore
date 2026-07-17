@@ -1,5 +1,4 @@
 #include "terrain.h"
-#include <zygo/physics/phys_consts.h>
 
 #include <zygo/core/assert.h>
 #include <zygo/math/common/scalar.h>
@@ -30,14 +29,14 @@ FlatGround::FlatGround( double ground_z )
 {
 }
 
-TerrainContact FlatGround::querySphere( Vector3 const & center, double radius ) const
+TerrainContact FlatGround::querySphere( Vector3 const & center, double radius, double margin ) const
 {
   TerrainContact tc;
 
   double lowest       = center.z - radius; // the lowest point of the sphere
   double penetration  = ground_z - lowest; // > 0 => penetration
 
-  if ( penetration < -CONTACT_MARGIN ) // not touching the ground
+  if ( penetration < -margin ) // not touching the ground
     return tc;
 
   tc.hit          = true;
@@ -155,7 +154,7 @@ Vector3 HeightField::normalAt( double x, double y ) const
   return Vector3::safeNormalized( n );
 }
 
-TerrainContact HeightField::querySphere( Vector3 const & center, double radius ) const
+TerrainContact HeightField::querySphere( Vector3 const & center, double radius, double margin ) const
 {
   TerrainContact tc;
 
@@ -171,7 +170,7 @@ TerrainContact HeightField::querySphere( Vector3 const & center, double radius )
   double dist = ( center - surf ) * n;        // dot
   double penetration = radius - dist;         // > 0 => penetration
 
-  if ( penetration < -CONTACT_MARGIN ) // not touching the ground
+  if ( penetration < -margin ) // not touching the ground
     return tc;
 
   tc.hit         = true;

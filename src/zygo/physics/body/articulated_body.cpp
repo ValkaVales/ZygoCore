@@ -20,6 +20,7 @@ namespace
 ArticulatedBody::ArticulatedBody( PhysicsWorld * phys_world )
   : phys_world ( phys_world )
 {
+  ZgAssert( phys_world != nullptr ); // the joints read the solver settings from the world
 }
 
 RigidBody & ArticulatedBody::createRigidBody( uint color )
@@ -37,7 +38,7 @@ HingeJoint & ArticulatedBody::createJoint(
 )
 {
   ZgAssert( !initialized );
-  joints.push_back( std::make_unique<HingeJoint>( a, b, anchor_mm, axis_world ) );
+  joints.push_back( std::make_unique<HingeJoint>( a, b, anchor_mm, axis_world, &phys_world->settings ) );
   return *joints.back();
 }
 
@@ -155,14 +156,14 @@ void ArticulatedBody::updateTotalCenterOfMass()
 
 void ArticulatedBody::rebuildPhysicalParameters_afterAllBodiesCreating()
 {
-  ZgAssert( !initialized );
+  ZgAssertRelease( !initialized );
   for ( auto & obj : objects )
     obj->rebuildPhysicalParameters_afterAllShapesAdded();
 }
 
 void ArticulatedBody::finishInitializing()
 {
-  ZgAssert( !initialized );
+  ZgAssertRelease( !initialized );
   initialized = true;
 
   updateTotalCenterOfMass();

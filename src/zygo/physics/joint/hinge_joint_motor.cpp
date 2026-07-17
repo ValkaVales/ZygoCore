@@ -8,17 +8,6 @@
 namespace zygo {
 namespace phys {
 
-namespace
-{
-  // ERP-like coefficient for the position motor.
-  // The fraction of the angle error we try to remove per simulation step.
-  // Good values for DT = 0.01: 0.03 .. 0.15.
-  const double MOTOR_POSITION_ERP = 0.07;
-
-  const double MOTOR_SOFTNESS = 0.0;
-}
-
-
 void HingeJoint::setMotorVelocity( double target_velocity_rad, double max_torque )
 {
   motor_mode = MOTOR_VELOCITY;
@@ -82,7 +71,7 @@ bool HingeJoint::solveMotorVelocityConstraint( double dt )
     double C = currentHingeAngle() - motor_target_angle;
 
     // Baumgarte/ERP: remove a fraction of the error per step.
-    double bias = MOTOR_POSITION_ERP * C / dt;
+    double bias = settings->motor.position_erp * C / dt;
 
     // The bias has the meaning of a target velocity, so cap it by the max velocity.
     toRange( bias, -motor_max_velocity, motor_max_velocity );
@@ -91,7 +80,7 @@ bool HingeJoint::solveMotorVelocityConstraint( double dt )
     rhs = -( Cdot + bias );
   }
 
-  double K = hingeAngularMassInv() + MOTOR_SOFTNESS;
+  double K = hingeAngularMassInv() + settings->motor.softness;
   if ( K < PHYS_EPSILON )
     return false;
 

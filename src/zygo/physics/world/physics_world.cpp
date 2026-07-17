@@ -17,14 +17,8 @@ namespace
 
 PhysicsWorld::PhysicsWorld( ITerrain * terrain )
   : terrain ( terrain )
-
-  , gravity             ( 0.0, 0.0, 0.0 ) // gravity is OFF by default - set it explicitly with setGravity()
-  , friction_mu         ( 0.75 )
-  , restitution_coeff   ( 0.0 )  // feet must not bounce, hence 0
-  , velocity_iterations ( 100 )
-  , position_iterations ( 100 )
-  , substeps            ( 4 )
 {
+  // All tuning defaults live in SolverSettings; gravity is OFF by default.
 }
 
 void PhysicsWorld::addObject( ArticulatedBody & obj )
@@ -62,7 +56,7 @@ void PhysicsWorld::processTick( double dt )
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  int n = max2( 1, substeps );
+  int n = max2( 1, settings.step.substeps );
   double h = dt / n;
 
   for ( int i = 0; i < n; ++i )
@@ -75,8 +69,11 @@ void PhysicsWorld::processTick( double dt )
 void PhysicsWorld::subStep( double dt )
 {
   // 1) External forces -> velocities (gravity BEFORE the solve).
+  if ( settings.gravity.enabled )
+  {
   for ( auto * co : objects )
-    co->applyGravity( gravity, dt );
+      co->applyGravity( settings.gravity.g, dt );
+  }
 
   // 2) Joint preparation (refreshes the world inertia) + contact detection.
   for ( auto * co : objects )
@@ -87,7 +84,7 @@ void PhysicsWorld::subStep( double dt )
 
 #ifdef USE_VELOCITY_SOLVER
   // 3) The shared velocity solve: joints and contacts in one Gauss-Seidel loop.
-  for ( int i = 0; i < velocity_iterations; ++i )
+  for ( int i = 0; i < settings.step.velocity_iterations; ++i )
   {
     velocity_solver_statistics.iterations_count = i + 1;
 
@@ -112,7 +109,7 @@ void PhysicsWorld::subStep( double dt )
   for ( auto * co : objects )
     co->updateInertia();
 
-  for ( int i = 0; i < position_iterations; ++i )
+  for ( int i = 0; i < settings.step.position_iterations; ++i )
   {
     position_solver_statistics.iterations_count = i + 1;
     bool has_error = false;
@@ -152,13 +149,13 @@ bool PhysicsWorld::solveContactPositionsOnce()
     if ( b.isStatic() )
       continue;
 
-    double penetration = c.penetration - CONTACT_POSITION_SLOP;
+    double penetration = c.penetration - settings.contacts.position_slop;
 
     if ( penetration <= 0.0 )
       continue;
 
-    double correction = CONTACT_POSITION_BETA * penetration;
-    applyMax( correction, MAX_CONTACT_POSITION_CORRECTION );
+    double correction = settings.contacts.position_beta * penetration;
+    applyMax( correction, settings.contacts.max_position_correction );
 
     double k = b.invEffectiveMassAlong( c.point, c.normal );
 
@@ -172,9 +169,9 @@ bool PhysicsWorld::solveContactPositionsOnce()
 
     Vector3 impulse = c.normal * lambda;
 
-    b.applyPositionImpulseAtWorldPoint( impulse, c.point );
+    b.applyPositionImpulseAtWorldPoint( impulse, c.point, settings.contacts.max_position_angular_correction );
 
-    if ( correction > MIN_CONTACT_POSITION_CORRECTION )
+    if ( correction > settings.contacts.min_position_correction )
       has_error = true;
   }
 
@@ -196,7 +193,7 @@ void PhysicsWorld::detectContacts()
   {
     Vector3 world_center = cs.body->localPointToWorld( cs.local_center );
 
-    TerrainContact tc = terrain->querySphere( world_center, cs.radius );
+    TerrainContact tc = terrain->querySphere( world_center, cs.radius, settings.contacts.margin );
 
     if ( !tc.hit )
     {
@@ -221,7 +218,7 @@ void PhysicsWorld::detectContacts()
       // to a different tangent plane. Reset only the friction.
       double normal_dot = cs.prev_normal * tc.normal;
 
-      if ( normal_dot < CONTACT_NORMAL_RESET_DOT )
+      if ( normal_dot < settings.contacts.normal_reset_dot )
       {
         cs.accumulated_t1_impulse = 0.0;
         cs.accumulated_t2_impulse = 0.0;
@@ -284,18 +281,18 @@ bool PhysicsWorld::solveContactsCollisionOnce( double dt )
 
       // Baumgarte bias: pushing out of the penetration.
       double bias = 0.0;
-      double penetration = c.penetration - CONTACT_SLOP;
+      double penetration = c.penetration - settings.contacts.slop;
 
       if ( penetration > 0.0 )
       {
-        bias = CONTACT_BAUMGARTE_BETA * penetration / dt;
-        applyMax( bias, MAX_CONTACT_BIAS_SPEED );
+        bias = settings.contacts.baumgarte_beta * penetration / dt;
+        applyMax( bias, settings.contacts.max_bias_speed );
       }
 
       // Restitution: the bounce.
       double restitution_speed = 0.0;
-      if ( restitution_coeff > 0.0  &&  c.vn0 < -RESTITUTION_VELOCITY_THRESHOLD ) // c.vn0 < 0 when approaching
-        restitution_speed = -restitution_coeff * c.vn0;
+      if ( settings.contacts.restitution > 0.0  &&  c.vn0 < -settings.contacts.restitution_velocity_threshold ) // c.vn0 < 0 when approaching
+        restitution_speed = -settings.contacts.restitution * c.vn0;
 
       // We want either the push-out or the bounce.
       // The target normal speed = max( push-out, bounce ).
@@ -317,7 +314,7 @@ bool PhysicsWorld::solveContactsCollisionOnce( double dt )
       if ( !isZero( impulse_len, PHYS_EPSILON ) )
         b.applyImpulseAtWorldPoint( c.normal * impulse_delta, c.point );
 
-      if ( impulse_len > MIN_ERROR_FOR_COLLISION_IMPULSE )
+      if ( impulse_len > settings.contacts.min_error_for_collision_impulse )
         has_error = true;
     }
   }
@@ -337,7 +334,7 @@ bool PhysicsWorld::solveContactsFrictionOnce()
     // ------------------------------------------------------------
     // The friction impulse with a circular Coulomb cone:
     // two tangents, the clamp is |J_t| <= mu * J_n.
-    double max_friction = friction_mu * cs.accumulated_normal_impulse;
+    double max_friction = settings.contacts.friction_mu * cs.accumulated_normal_impulse;
     applyMin( max_friction, 0.0 );
 
     // A local function: try to set the new accumulated tangent impulses,
@@ -371,8 +368,8 @@ bool PhysicsWorld::solveContactsFrictionOnce()
         if ( !isZero( impulse.lengthSqr(), PHYS_EPSILON_SQR ) )
           b.applyImpulseAtWorldPoint( impulse, c.point );
 
-        return std::abs( delta_t1 ) > MIN_ERROR_FOR_FRICTION_IMPULSE
-            || std::abs( delta_t2 ) > MIN_ERROR_FOR_FRICTION_IMPULSE;
+        return std::abs( delta_t1 ) > settings.contacts.min_error_for_friction_impulse
+            || std::abs( delta_t2 ) > settings.contacts.min_error_for_friction_impulse;
       };
 
     // Important: if the normal impulse has decreased, the old friction may exceed

@@ -88,7 +88,7 @@ Vector3 RigidBody::localVectorToWorld( Vector3 const & v ) const
   return rotation_quaternion.rotateVector3( v );
 }
 
-void RigidBody::applyPositionImpulseAtWorldPoint( Vector3 const & impulse, Vector3 const & world_point )
+void RigidBody::applyPositionImpulseAtWorldPoint( Vector3 const & impulse, Vector3 const & world_point, double max_angular_correction )
 {
   if ( isStatic() )
     return;
@@ -101,7 +101,7 @@ void RigidBody::applyPositionImpulseAtWorldPoint( Vector3 const & impulse, Vecto
   Vector3 moment_of_impulse = r.crossProduct( impulse );
   Vector3 angular_correction = inertia_tensor_world_inv * moment_of_impulse;
 
-  angular_correction.limitLength( MAX_POSITION_ANGULAR_CORRECTION );
+  angular_correction.limitLength( max_angular_correction );
 
   applyOrientationCorrection( angular_correction );
 }
@@ -214,7 +214,7 @@ void RigidBody::calcMassAndLocalCenterOfMass()
 
 void RigidBody::rebuildPhysicalParameters_afterAllShapesAdded() // should be called only once, after all shapes have been added
 {
-  ZgAssert( !initialized );
+  ZgAssertRelease( !initialized );
   initialized = true;
 
   total_mass  = 0.0;

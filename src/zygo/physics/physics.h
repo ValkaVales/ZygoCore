@@ -17,6 +17,7 @@
 // ZygoCore (see zygogl/debug/phys_draw.h).
 
 #include <zygo/physics/phys_consts.h>
+#include <zygo/physics/solver_settings.h>
 #include <zygo/physics/i_physics_drawer.h>
 #include <zygo/physics/shape/shape.h>
 #include <zygo/physics/body/rigid_body.h>

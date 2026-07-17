@@ -11,6 +11,7 @@
 #include <zygo/physics/world/contact_point.h>
 #include <zygo/physics/terrain/terrain.h>
 #include <zygo/physics/solver_statistics.h>
+#include <zygo/physics/solver_settings.h>
 #include <zygo/math/vector/vec3.h>
 #include <vector>
 
@@ -27,37 +28,36 @@ private:
   std::vector<ContactSphere> contact_spheres;
   std::vector<ContactPoint>  contacts;   // rebuilt every substep
 
-  Vector3 gravity;
-  double  friction_mu;
-  double  restitution_coeff;
-  int     velocity_iterations;
-  int     position_iterations;
-  int     substeps;
-
   SolverStatistics velocity_solver_statistics;
   SolverStatistics position_solver_statistics;
 
   long long total_calc_time = 0LL; // microseconds
 
 public:
+  // All runtime tuning: gravity, stepping, joint/contact solver parameters.
+  // Tune directly: world.settings.gravity.enabled = true;
+  SolverSettings settings;
+
   explicit PhysicsWorld( ITerrain * terrain );
 
   // Draws the registered contact spheres. Bodies and the terrain draw themselves.
   void draw( IPhysicsDrawer const& drawer ) const;
 
-  //
-  void setGravity( Vector3 const & g ) { gravity = g; }
+  // Convenience wrappers over `settings` (brevity at the call sites).
+  void setGravity( Vector3 const & g ) { settings.gravity.g = g; settings.gravity.enabled = true; }
+  void setGravityEnabled( bool on )    { settings.gravity.enabled = on; }
   void setTerrain( ITerrain * t )      { terrain = t; }
 
-  void setFrictionMu      ( double mu ) { friction_mu = mu; }
-  void setRestitutionCoeff( double e )  { restitution_coeff = e; }
+  void setFrictionMu      ( double mu ) { settings.contacts.friction_mu = mu; }
+  void setRestitutionCoeff( double e )  { settings.contacts.restitution = e; }
 
-  void setVelocityIterations( int n ) { velocity_iterations = n; }
-  void setPositionIterations( int n ) { position_iterations = n; }
-  void setSubsteps          ( int n ) { substeps = n; }
+  void setVelocityIterations( int n ) { settings.step.velocity_iterations = n; }
+  void setPositionIterations( int n ) { settings.step.position_iterations = n; }
+  void setSubsteps          ( int n ) { settings.step.substeps = n; }
 
   //
-  Vector3 const & getGravity() const { return gravity; }
+  Vector3 const & getGravity() const { return settings.gravity.g; }
+  bool isGravityEnabled()      const { return settings.gravity.enabled; }
 
   void addObject( ArticulatedBody & obj );
 

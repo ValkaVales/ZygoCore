@@ -30,7 +30,8 @@ public:
   virtual void draw( IPhysicsDrawer const& drawer ) const = 0;
 
   // Intersection query of a sphere (center, radius) against the ground.
-  virtual TerrainContact querySphere( Vector3 const & center, double radius ) const = 0;
+  // margin - the "already counts as a contact" distance (the world passes settings.contacts.margin here).
+  virtual TerrainContact querySphere( Vector3 const & center, double radius, double margin ) const = 0;
 
   // The surface height at (x, y).
   virtual double heightAt( double x, double y ) const = 0;
@@ -51,7 +52,7 @@ public:
 
   double heightAt( double /*x*/, double /*y*/ ) const override { return ground_z; }
 
-  TerrainContact querySphere( Vector3 const & center, double radius ) const override;
+  TerrainContact querySphere( Vector3 const & center, double radius, double margin ) const override;
 };
 
 
@@ -94,7 +95,7 @@ public:
   double  heightAt( double x, double y ) const override; // bilinear interpolation
   Vector3 normalAt( double x, double y ) const;          // the normal from the height gradient
 
-  TerrainContact querySphere( Vector3 const & center, double radius ) const override;
+  TerrainContact querySphere( Vector3 const & center, double radius, double margin ) const override;
 };
 
 } // namespace phys

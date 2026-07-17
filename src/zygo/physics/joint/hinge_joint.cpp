@@ -20,7 +20,8 @@ namespace
     Vector3 const & rA,
     Vector3 const & rB,
     Mat3 const & inv_IA,
-    Mat3 const & inv_IB
+    Mat3 const & inv_IB,
+    double softness
   )
   {
     Mat3 rAx = Mat3::skew( rA );
@@ -32,9 +33,9 @@ namespace
     K += ( rAx * inv_IA ).mulTransposedRight( rAx );
     K += ( rBx * inv_IB ).mulTransposedRight( rBx );
 
-    K.m[0] += SOFTNESS;
-    K.m[4] += SOFTNESS;
-    K.m[8] += SOFTNESS;
+    K.m[0] += softness;
+    K.m[4] += softness;
+    K.m[8] += softness;
 
     return K;
   }
@@ -45,11 +46,15 @@ HingeJoint::HingeJoint(
   RigidBody * a,
   RigidBody * b,
   Vector3 anchor_mm,
-  Vector3 axis_world
+  Vector3 axis_world,
+  SolverSettings const * settings
 )
   : objA( a )
   , objB( b )
+  , settings( settings )
 {
+  ZgAssert( settings != nullptr );
+
   Vector3 anchor = anchor_mm / MILLIMETERS_IN_METER;
 
   local_anchor_A = objA->worldPointToLocal( anchor );
@@ -134,14 +139,14 @@ bool HingeJoint::solveAnchorVelocity( double dt ) // returns true, if still has 
   // jitter would produce parasite impulses.
   Vector3 bias;
   double err_len = pos_error.length();
-  if ( err_len > POSITION_LINEAR_SLOP )
+  if ( err_len > settings->joints.linear_slop )
   {
-    double effective_error = err_len - POSITION_LINEAR_SLOP;
+    double effective_error = err_len - settings->joints.linear_slop;
 
-    bias = pos_error * (POSITION_BETA * effective_error / (err_len * dt));
+    bias = pos_error * (settings->joints.position_beta * effective_error / (err_len * dt));
   }
 
-  bias.limitLength( MAX_BIAS_SPEED );
+  bias.limitLength( settings->joints.max_bias_speed );
 
   Vector3 rhs = -(relV + bias);
 
@@ -151,7 +156,8 @@ bool HingeJoint::solveAnchorVelocity( double dt ) // returns true, if still has 
     rA,
     rB,
     objA->inertia_tensor_world_inv,
-    objB->inertia_tensor_world_inv
+    objB->inertia_tensor_world_inv,
+    settings->joints.softness
   );
 
   // K is symmetric positive definite - solve with the fast Cholesky path.
@@ -160,7 +166,7 @@ bool HingeJoint::solveAnchorVelocity( double dt ) // returns true, if still has 
   if ( !K.trySolve( rhs, J ) )
     return false; // degenerate effective mass (e.g. both bodies static) - nothing to solve
 
-  double J_len = J.limitLength( MAX_IMPULSE );
+  double J_len = J.limitLength( settings->joints.max_impulse );
 
 #ifdef DEBUG_CONSERVATION_CHECKS
   Vector3 L_before = calcTotalL();
@@ -176,7 +182,7 @@ bool HingeJoint::solveAnchorVelocity( double dt ) // returns true, if still has 
   ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
 #endif
 
-  return J_len > MIN_ERROR_FOR_J;
+  return J_len > settings->joints.min_error_for_j;
 }
 
 bool HingeJoint::solveAxisVelocity( double dt ) // returns true, if still has error
@@ -222,17 +228,17 @@ bool HingeJoint::solveAxisVelocity( double dt ) // returns true, if still has er
   double bias2 = 0.0;
 
   double c_len = sqrt( C1*C1 + C2*C2 );
-  if ( c_len > POSITION_ANGULAR_SLOP )
+  if ( c_len > settings->joints.angular_slop )
   {
-    double scale = ANGULAR_BETA * (c_len - POSITION_ANGULAR_SLOP) / (c_len * dt);
+    double scale = settings->joints.angular_beta * (c_len - settings->joints.angular_slop) / (c_len * dt);
     bias1 = C1 * scale;
     bias2 = C2 * scale;
 
     double bias_len = sqrt( sqr(bias1) + sqr(bias2) );
 
-    if ( bias_len > MAX_AXIS_BIAS_SPEED )
+    if ( bias_len > settings->joints.max_axis_bias_speed )
     {
-      double s = MAX_AXIS_BIAS_SPEED / bias_len;
+      double s = settings->joints.max_axis_bias_speed / bias_len;
       bias1 *= s;
       bias2 *= s;
     }
@@ -246,10 +252,10 @@ bool HingeJoint::solveAxisVelocity( double dt ) // returns true, if still has er
   Vector3 Ig1B = objB->inertia_tensor_world_inv * g1;
   Vector3 Ig2B = objB->inertia_tensor_world_inv * g2;
 
-  double K11 = g1 * (Ig1A + Ig1B) + SOFTNESS;
+  double K11 = g1 * (Ig1A + Ig1B) + settings->joints.softness;
   double K12 = g1 * (Ig2A + Ig2B);
   double K21 = g2 * (Ig1A + Ig1B);
-  double K22 = g2 * (Ig2A + Ig2B) + SOFTNESS;
+  double K22 = g2 * (Ig2A + Ig2B) + settings->joints.softness;
 
   double det = K11 * K22 - K12 * K21;
   if ( std::abs( det ) < PHYS_EPSILON )
@@ -261,7 +267,7 @@ bool HingeJoint::solveAxisVelocity( double dt ) // returns true, if still has er
   double lambda2 = inv_det * ( -K21 * rhs1 + K11 * rhs2 );
 
   Vector3 angular_impulse = g1 * lambda1 + g2 * lambda2;
-  double angular_impulse_len = angular_impulse.limitLength( MAX_IMPULSE );
+  double angular_impulse_len = angular_impulse.limitLength( settings->joints.max_impulse );
 
 #ifdef DEBUG_CONSERVATION_CHECKS
   Vector3 L_before = calcTotalL();
@@ -277,7 +283,7 @@ bool HingeJoint::solveAxisVelocity( double dt ) // returns true, if still has er
   ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
 #endif
 
-  return angular_impulse_len > MIN_ERROR_FOR_ANGULAR_IMPULSE;
+  return angular_impulse_len > settings->joints.min_error_for_angular_impulse;
 }
 #endif
 
@@ -298,11 +304,11 @@ bool HingeJoint::solveAnchorPosition()
 
   Vector3 err = pA - pB;
   double err_len = err.length();
-  if ( err_len < POSITION_ACTIVATION_ERROR )
+  if ( err_len < settings->joints.position_solver_activation_error )
     return false;
 
-  double correction_len = err_len * POSITION_SOLVER_BETA;
-  applyMax( correction_len, MAX_POSITION_LINEAR_CORRECTION );
+  double correction_len = err_len * settings->joints.position_solver_beta;
+  applyMax( correction_len, settings->joints.max_position_linear_correction );
 
   Vector3 correction = err * (correction_len / err_len);
 
@@ -318,7 +324,8 @@ bool HingeJoint::solveAnchorPosition()
     rA,
     rB,
     objA->inertia_tensor_world_inv,
-    objB->inertia_tensor_world_inv
+    objB->inertia_tensor_world_inv,
+    settings->joints.softness
   );
 
   // We need to reduce the error, hence RHS = -correction.
@@ -328,12 +335,14 @@ bool HingeJoint::solveAnchorPosition()
   if ( !K.trySolve( -correction, impulse ) )
     return false; // degenerate effective mass - nothing to correct
 
-  double impulse_len = impulse.limitLength( MAX_IMPULSE );
+  double impulse_len = impulse.limitLength( settings->joints.max_impulse );
 
-  objA->applyPositionImpulseAtWorldPoint(  impulse, p );
-  objB->applyPositionImpulseAtWorldPoint( -impulse, p );
+  double max_angular_correction = settings->joints.max_position_angular_correction;
 
-  return impulse_len > MIN_ERROR_FOR_IMPULSE;
+  objA->applyPositionImpulseAtWorldPoint(  impulse, p, max_angular_correction );
+  objB->applyPositionImpulseAtWorldPoint( -impulse, p, max_angular_correction );
+
+  return impulse_len > settings->joints.min_error_for_impulse;
 }
 
 bool HingeJoint::solveAxisPosition()
@@ -349,13 +358,13 @@ bool HingeJoint::solveAxisPosition()
 
   Vector3 err = aA.crossProduct( aB );
   double err_len = err.length();
-  if ( err_len < POSITION_ANGULAR_SLOP )
+  if ( err_len < settings->joints.angular_slop )
     return false;
 
   Vector3 dir = err / err_len;
 
-  double correction_angle = err_len * POSITION_SOLVER_BETA;
-  applyMax( correction_angle, MAX_POSITION_ANGULAR_CORRECTION );
+  double correction_angle = err_len * settings->joints.position_solver_beta;
+  applyMax( correction_angle, settings->joints.max_position_angular_correction );
 
   Vector3 correction = dir * correction_angle;
 

@@ -116,7 +116,9 @@ public:
   Vector3 worldVectorToLocal( Vector3 const & v ) const;
   Vector3 localVectorToWorld( Vector3 const & v ) const;
 
-  void applyPositionImpulseAtWorldPoint( Vector3 const & impulse, Vector3 const & world_point );
+  // max_angular_correction caps the rotation produced by one positional pseudo-impulse
+  // (callers pass their settings block value, e.g. settings.joints.max_position_angular_correction).
+  void applyPositionImpulseAtWorldPoint( Vector3 const & impulse, Vector3 const & world_point, double max_angular_correction );
   void applyImpulseAtWorldPoint        ( Vector3 const & impulse, Vector3 const & world_point );
   void applyAngularImpulse( Vector3 const & angular_impulse );
   void integrateVelocities( double dt );

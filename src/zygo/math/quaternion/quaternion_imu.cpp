@@ -31,7 +31,7 @@ Real Quaternion::calcRungeKuttaDeltas( Vector3 const& gyro, Real dt, Vector3& dv
 {
   dt *= 0.5;
 
-  Real ds = (-v.x * gyro.x  -  v.y * gyro.y  -  v.z * gyro.z) * dt;
+  Real ds   = (-v.x * gyro.x  -  v.y * gyro.y  -  v.z * gyro.z) * dt;
   dv.x      = (   s * gyro.x  +  v.y * gyro.z  -  v.z * gyro.y) * dt;
   dv.y      = (   s * gyro.y  -  v.x * gyro.z  +  v.z * gyro.x) * dt;
   dv.z      = (   s * gyro.z  +  v.x * gyro.y  -  v.y * gyro.x) * dt;

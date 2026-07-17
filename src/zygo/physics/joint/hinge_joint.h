@@ -5,6 +5,7 @@
 
 #include <zygo/math/vector/vec3.h>
 #include <zygo/physics/joint/joint_limits.h>
+#include <zygo/physics/solver_settings.h>
 #include <zygo/physics/i_physics_drawer.h>
 
 
@@ -31,6 +32,9 @@ private:
 private:
   RigidBody * objA = nullptr;
   RigidBody * objB = nullptr;
+
+  // Shared solver tuning of the world this joint lives in (not owned).
+  SolverSettings const * settings = nullptr;
 
   // The joint point in the local coordinates of each body.
   Vector3 local_anchor_A;
@@ -71,7 +75,8 @@ public:
     RigidBody * a,
     RigidBody * b,
     Vector3 anchor_mm,
-    Vector3 axis_world
+    Vector3 axis_world,
+    SolverSettings const * settings
   );
 
   void enableAngleLimit( JointLimits limits );

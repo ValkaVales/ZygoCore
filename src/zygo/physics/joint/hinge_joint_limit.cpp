@@ -8,15 +8,6 @@
 namespace zygo {
 namespace phys {
 
-namespace
-{
-  const double ANGLE_LIMIT_BETA        = 0.1;
-  const double ANGLE_LIMIT_SLOP        = DEG2RAD( 0.5 );
-  const double ANGLE_LIMIT_SOFTNESS    = 1e-8;
-  const double MAX_ANGLE_LIMIT_IMPULSE = 20.0;
-}
-
-
 void HingeJoint::enableAngleLimit( JointLimits limits )
 {
   this->limits = limits;
@@ -101,7 +92,7 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
 
   double * accumulated = nullptr;
 
-  if ( angle < limits.min_angle_rad - ANGLE_LIMIT_SLOP )
+  if ( angle < limits.min_angle_rad - settings->limits.slop )
   {
     // lower: angle >= min
     // C = angle - min >= 0
@@ -118,7 +109,7 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
     // The upper limit is definitely inactive now.
     accumulated_upper_limit_impulse = 0.0;
   } else
-  if ( angle > limits.max_angle_rad + ANGLE_LIMIT_SLOP )
+  if ( angle > limits.max_angle_rad + settings->limits.slop )
   {
     // upper: angle <= max
     // C = max - angle >= 0
@@ -149,12 +140,12 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
   double Cdot = JwA * wA + JwB * wB;
 
   // The bias must push toward C -> 0.
-  double bias = ANGLE_LIMIT_BETA * C / dt;
+  double bias = settings->limits.beta * C / dt;
 
   Vector3 IAJwA = objA->inertia_tensor_world_inv * JwA;
   Vector3 IBJwB = objB->inertia_tensor_world_inv * JwB;
 
-  double K = JwA * IAJwA + JwB * IBJwB + ANGLE_LIMIT_SOFTNESS;
+  double K = JwA * IAJwA + JwB * IBJwB + settings->limits.softness;
   if ( std::abs( K ) < PHYS_EPSILON )
     return false;
 
@@ -163,7 +154,7 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
   // One-sided constraint: the accumulated impulse is clamped to [0, max].
   double old_accumulated = *accumulated;
   double new_accumulated = old_accumulated + lambda;
-  toRange( new_accumulated, 0.0, MAX_ANGLE_LIMIT_IMPULSE );
+  toRange( new_accumulated, 0.0, settings->limits.max_impulse );
   *accumulated = new_accumulated;
 
   lambda = new_accumulated - old_accumulated;
@@ -174,7 +165,7 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
   objA->applyAngularImpulse( impulseA );
   objB->applyAngularImpulse( impulseB );
 
-  return lambda > MIN_ERROR_FOR_ANGULAR_IMPULSE;
+  return lambda > settings->limits.min_error_for_impulse;
 }
 
 } // namespace phys

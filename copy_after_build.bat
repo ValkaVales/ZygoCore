@@ -7,6 +7,7 @@ rem set DEST=D:\VS\TestZygoCore
 rem set DEST=D:\VS\TitanBrusok
 rem set DEST=D:\VS\TestPID
 set DEST=D:\VS\PhysRigidBody
+rem set DEST=D:\VS\_NeuroBook\NeuroBook00_COPY
 
 
 
