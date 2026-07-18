@@ -7,11 +7,12 @@
 
 
 namespace zygo {
-namespace phys {
 
 // Unit conversion for the construction API (grams/millimeters -> SI).
 const double GRAMS_IN_KG          = 1000.0;
 const double MILLIMETERS_IN_METER = 1000.0;
+
+namespace phys {
 
 // Float-precision guards (NOT tuning - do not change these).
 const double PHYS_EPSILON     = 1e-15;
