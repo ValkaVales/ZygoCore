@@ -27,7 +27,12 @@ struct JointAngles
   double q2; // knee
 
   JointAngles();
-  JointAngles( double q0_deg, double q1_deg, double q2_deg );
+
+  static JointAngles fromDeg( double q0_deg, double q1_deg, double q2_deg );
+  static JointAngles fromRad( double q0_rad, double q1_rad, double q2_rad );
+
+private:
+  JointAngles( double q0_rad, double q1_rad, double q2_rad );
 };
 
 } // namespace phys

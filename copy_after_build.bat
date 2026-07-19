@@ -6,8 +6,7 @@ set DEST0=D:\VS\ZygoGL
 rem set DEST=D:\VS\TestZygoCore
 rem set DEST=D:\VS\TitanBrusok
 rem set DEST=D:\VS\TestPID
-rem set DEST=D:\VS\PhysRigidBody
-set DEST=D:\VS\_COPY4\PhysRigidBody
+set DEST=D:\VS\PhysRigidBody
 rem set DEST=D:\VS\_NeuroBook\NeuroBook00_COPY
 
 

@@ -50,14 +50,24 @@ JointAngles::JointAngles()
 {
 }
 
-JointAngles::JointAngles( double q0_deg, double q1_deg, double q2_deg )
-  : q0 ( DEG2RAD( q0_deg ) )
-  , q1 ( DEG2RAD( q1_deg ) )
-  , q2 ( DEG2RAD( q2_deg ) )
+JointAngles::JointAngles( double q0_rad, double q1_rad, double q2_rad )
+  : q0 ( q0_rad )
+  , q1 ( q1_rad )
+  , q2 ( q2_rad )
 {
   ZgAssert( checkAngle180( q0 ) );
   ZgAssert( checkAngle180( q1 ) );
   ZgAssert( checkAngle180( q2 ) );
+}
+
+JointAngles JointAngles::fromDeg( double q0_deg, double q1_deg, double q2_deg )
+{
+  return fromRad( DEG2RAD(q0_deg), DEG2RAD(q1_deg), DEG2RAD(q2_deg) );
+}
+
+JointAngles JointAngles::fromRad( double q0_rad, double q1_rad, double q2_rad )
+{
+  return JointAngles( q0_rad, q1_rad, q2_rad );
 }
 
 } // namespace phys
