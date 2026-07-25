@@ -1,7 +1,7 @@
 #pragma once
 
 // Hinge joint (one rotational DOF) between two rigid bodies,
-// with optional angle limits and a velocity/position motor.
+// with optional angle limits and a velocity/position/torque motor.
 
 #include <zygo/math/vector/vec3.h>
 #include <zygo/physics/joint/joint_limits.h>
@@ -26,7 +26,8 @@ private:
   {
     MOTOR_OFF,
     MOTOR_VELOCITY,
-    MOTOR_POSITION
+    MOTOR_POSITION,
+    MOTOR_TORQUE
   };
 
 private:
@@ -60,6 +61,7 @@ private:
 
   double motor_target_velocity = 0.0; // rad/s
   double motor_target_angle    = 0.0; // rad
+  double motor_target_torque   = 0.0; // N*m
 
   double motor_max_torque      = 0.0; // N*m
   double motor_max_velocity    = 0.0; // rad/s
@@ -93,6 +95,15 @@ public:
   // motor
   void setMotorVelocity( double target_velocity_rad, double max_torque );
   void setMotorPosition( double target_angle_rad, double max_torque, double max_velocity_rad );
+
+  // Open-loop torque source: the motor stops being a constraint and simply injects torque*dt of angular impulse per step, positive torque increasing the hinge angle.
+  //
+  // Unlike the velocity/position modes this one obeys NEITHER max_torque NOR max_velocity - the caller owns both.
+  // That is deliberate: it lets an outer controller model a real actuator
+  // (its own torque-speed curve, a gearbox or a belt whose reaction lands on a different hinge)
+  // instead of the idealized "unlimited torque up to a hard speed wall" the built-in servo assumes.
+  void setMotorTorque( double torque );
+
   void disableMotor();
 
   void prepareVelocitySolve();

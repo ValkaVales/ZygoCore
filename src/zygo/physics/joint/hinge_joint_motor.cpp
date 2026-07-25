@@ -29,12 +29,20 @@ void HingeJoint::setMotorPosition(
   motor_max_velocity  = std::abs( max_velocity_rad );
 }
 
+void HingeJoint::setMotorTorque( double torque )
+{
+  motor_mode = MOTOR_TORQUE;
+
+  motor_target_torque = torque;
+}
+
 void HingeJoint::disableMotor()
 {
   motor_mode = MOTOR_OFF;
 
   motor_target_velocity     = 0.0;
   motor_target_angle        = 0.0;
+  motor_target_torque       = 0.0;
   motor_max_torque          = 0.0;
   motor_max_velocity        = 0.0;
   accumulated_motor_impulse = 0.0;
@@ -54,6 +62,28 @@ bool HingeJoint::solveMotorVelocityConstraint( double dt )
 
   Vector3 axis = worldAxisA();
   axis = Vector3::safeNormalized( axis );
+
+  if ( motor_mode == MOTOR_TORQUE )
+  {
+    // A torque source is not a constraint: over the whole step it must inject exactly torque*dt of angular impulse, no matter how the solver behaves around it.
+    //
+    // But this function is called once per Gauss-Seidel ITERATION, so injecting the impulse directly here would multiply it by velocity_iterations.
+    // Reusing the same accumulator as the other modes solves that: the total is pinned to torque*dt, the first iteration applies all of it and every later one applies a zero delta.
+    // prepareVelocitySolve() clears the accumulator once per step, so the budget is fresh every time.
+    double const old_impulse = accumulated_motor_impulse;
+
+    accumulated_motor_impulse = motor_target_torque * dt;
+
+    double const lambda = accumulated_motor_impulse - old_impulse;
+
+    Vector3 const torque_impulse = axis * lambda;
+
+    objA->applyAngularImpulse( -torque_impulse );
+    objB->applyAngularImpulse(  torque_impulse );
+
+    // No target velocity, so nothing to report as an error.
+    return false;
+  }
 
   double Cdot = curAngleVelocity();
 
