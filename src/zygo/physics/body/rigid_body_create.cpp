@@ -139,8 +139,8 @@ void RigidBody::addVerticalPlate(
 
   // Local axes of the box:
   // ex - along the horizontal side of the plate;
-  // ey - up;
-  // ez - along the plate thickness.
+  // ez - up;
+  // ey - along the plate thickness.
   Vector3 ex = horiz_v / horiz_len;
   Vector3 ez( 0.0, 0.0, 1.0 );
   Vector3 ey = ez.crossProduct( ex );

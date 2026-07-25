@@ -69,7 +69,7 @@ private:
   double accumulated_motor_impulse = 0.0;
 
 public:
-  HingeJoint() = default;
+  HingeJoint() = delete;
 
   // anchor_mm - the world joint point, in millimeters (construction units, see physics.h);
   // axis_world - the world joint axis (any nonzero length).

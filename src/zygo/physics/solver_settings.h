@@ -30,9 +30,9 @@ struct GravitySettings
 // ------------------------------------------------------------------ stepping
 struct StepSettings
 {
-  int substeps            = 4;
-  int velocity_iterations = 100; // per substep; joints and contacts share the loop
-  int position_iterations = 100; // per substep, with contact re-detection
+  int substeps            = 5;
+  int velocity_iterations = 30; // per substep; joints and contacts share the loop
+  int position_iterations = 10; // per substep, with contact re-detection
 };
 
 

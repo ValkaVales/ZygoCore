@@ -9,12 +9,11 @@
 //   - Everything else is strictly SI: kilograms, meters, seconds, radians, N*m.
 //     Terrain, gravity, velocities, impulses and all solver internals live in SI.
 //
-// Precision: the solver uses double throughout (not Real) - iterative impulse solvers
-// degrade quickly in single precision, so this does not follow a possible Real = float switch.
+// Precision: the solver uses double throughout (not Real) - iterative impulse solvers degrade quickly in single precision, so this does not follow a possible Real = float switch.
 //
-// Rendering: the engine does not depend on any graphics library. Debug drawing goes through
-// the IPhysicsDrawer interface (i_physics_draw.h); a ZygoGL implementation lives outside
-// ZygoCore (see zygogl/debug/phys_draw.h).
+// Rendering: the engine does not depend on any graphics library.
+// Debug drawing goes through the IPhysicsDrawer interface (i_physics_drawer.h); 
+// a ZygoGL implementation lives outside ZygoCore (see zygogl/debug/phys_drawer.h).
 
 #include <zygo/physics/phys_consts.h>
 #include <zygo/physics/solver_settings.h>

@@ -1,11 +1,9 @@
 #pragma once
 
-// The physics world: holds references to ArticulatedBody-s and the terrain,
-// applies gravity, detects foot-vs-ground contacts and runs the shared
-// velocity solve (joints + contacts together) with substepping.
+// The physics world: holds references to ArticulatedBody-s and the terrain, applies gravity,
+// detects foot-vs-ground contacts and runs the shared velocity solve (joints + contacts together) with substepping.
 //
-// Bodies and the terrain are NOT owned by the world (never deleted by it) -
-// the world stores raw pointers, the caller guarantees the lifetimes.
+// Bodies and the terrain are NOT owned by the world (never deleted by it) - the world stores raw pointers, the caller guarantees the lifetimes.
 
 #include <zygo/physics/body/articulated_body.h>
 #include <zygo/physics/world/contact_point.h>
