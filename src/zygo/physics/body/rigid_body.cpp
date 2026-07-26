@@ -29,6 +29,11 @@ void RigidBody::clearGeometry()
 {
   shapes.clear();
 
+  // Re-open the construction phase. The body must be rebuilt before any world/local conversion, joint creation or simulation step uses it again.
+  initialized = false;
+  is_static   = false;
+  is_sleeping = false;
+
   total_mass = 0.0;
   inv_mass = 0.0;
 

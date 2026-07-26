@@ -67,6 +67,14 @@ void ArticulatedBody::prepareSolve( double dt )
     joint->prepareVelocitySolve( dt );
 }
 
+void ArticulatedBody::applyExternalActuatorImpulses( double dt )
+{
+  ZgAssert( initialized );
+
+  for ( auto & joint : joints )
+    joint->applyExternalActuatorImpulse( dt );
+}
+
 void ArticulatedBody::warmStartJoints( double dt )
 {
   ZgAssert( initialized );
@@ -127,6 +135,7 @@ void ArticulatedBody::processTick( double dt )
   auto start = std::chrono::high_resolution_clock::now();
 
   prepareSolve( dt );
+  applyExternalActuatorImpulses( dt );
   warmStartJoints( dt );
 
 #ifdef USE_VELOCITY_SOLVER

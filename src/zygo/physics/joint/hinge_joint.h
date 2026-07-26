@@ -155,9 +155,13 @@ public:
 
   void disableMotor();
 
-  // Rebuilds the per-substep cache above and resets the motor/limit accumulators.
+  // Rebuilds the per-substep cache above and resets the servo/limit accumulators.
   // Call once per substep, AFTER the world inertia has been refreshed.
   void prepareVelocitySolve( double dt );
+
+  // Applies open-loop MOTOR_TORQUE exactly once per substep.
+  // This is an external actuator impulse, not an iterative constraint, so it must live outside the Gauss-Seidel loop or it would depend on velocity_iterations.
+  void applyExternalActuatorImpulse( double dt );
 
   // Re-applies the accumulated anchor/axis impulses.
   // Separate from prepareVelocitySolve() so that the world can run it next to warmStartContacts(), i.e. after contact detection has sampled the approach velocities.

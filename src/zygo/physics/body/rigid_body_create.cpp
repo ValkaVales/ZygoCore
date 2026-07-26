@@ -16,6 +16,12 @@ namespace phys {
 
 void RigidBody::addShape( Shape * shape )
 {
+  // Once rebuildPhysicalParameters_afterAllShapesAdded() has shifted the existing shapes into the body-COM frame,
+  // adding another world-space shape would leave the geometry, mass and inertia describing different bodies.
+  // Re-open construction only through clearGeometry(), which resets initialized.
+  ZgAssertRelease( !initialized );
+  ZgAssertRelease( shape != nullptr );
+
   shapes.push_back( std::unique_ptr<Shape>( shape ) );
 }
 

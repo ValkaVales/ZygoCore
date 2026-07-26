@@ -78,82 +78,90 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
   if ( !limit_enabled )
     return false;
 
-  // Both are constants of the substep - see prepareVelocitySolve().
+  // Geometry is constant during the velocity loop; velocities are not.
   Vector3 const & axis  = cached_axis_A;
   double  const   angle = cached_hinge_angle;
 
-  // Solving the inequality C >= 0:
-  // lower limit: angle >= min_angle  ->  C = angle - min_angle
-  // upper limit: angle <= max_angle  ->  C = max_angle - angle
+  // Use one generic inequality C >= 0.
+  //
+  // lower: C = angle - min, Cdot = +angleDot
+  // upper: C = max - angle, Cdot = -angleDot
   double C = 0.0;
+  double Cdot = 0.0;
+  double target_Cdot = 0.0;
 
-  // Jacobian over the angular velocities:
-  // Cdot = JwA*wA + JwB*wB
   Vector3 JwA, JwB;
-
   double * accumulated = nullptr;
 
-  if ( angle < limits.min_angle_rad - settings->limits.slop )
-  {
-    // lower: angle >= min
-    // C = angle - min >= 0
-    C = angle - limits.min_angle_rad;   // < 0 when violated
+  double const angle_dot = (objB->angular_speed - objA->angular_speed) * axis;
 
-    // angleDot = -(wRel*axis) = -(wA-wB)*axis
-    //  => Cdot = angleDot
-    //  => JwA = -axis, JwB = +axis
+  double const lower_C = angle - limits.min_angle_rad;
+  double const upper_C = limits.max_angle_rad - angle;
+
+  bool const lower_violated = (lower_C < -settings->limits.slop);
+  bool const upper_violated = (upper_C < -settings->limits.slop);
+
+  // Speculative/predictive activation:
+  // while still inside the legal interval, activate the row if the current angular velocity would cross the boundary by the end of this substep.
+  // The allowed approach speed is exactly the speed that reaches the limit.
+  bool const lower_predicted = (lower_C >= 0.0) && (lower_C + angle_dot * dt < 0.0);
+  bool const upper_predicted = (upper_C >= 0.0) && (upper_C - angle_dot * dt < 0.0);
+
+  // Once a speculative row has accumulated an impulse, keep solving that SAME row for the rest of the velocity loop.
+  // Otherwise the first correction would make the prediction false, the accumulator would be forgotten, and a neighbouring constraint could make it fire repeatedly with an incorrect total impulse.
+  bool const lower_active = lower_violated || lower_predicted || (accumulated_lower_limit_impulse > 0.0);
+  bool const upper_active = upper_violated || upper_predicted || (accumulated_upper_limit_impulse > 0.0);
+
+  if ( lower_active && !upper_active )
+  {
+    C = lower_C;
+    Cdot = angle_dot;
+
     JwA = -axis;
     JwB =  axis;
 
     accumulated = &accumulated_lower_limit_impulse;
-
-    // The upper limit is definitely inactive now.
     accumulated_upper_limit_impulse = 0.0;
-  } else
-  if ( angle > limits.max_angle_rad + settings->limits.slop )
-  {
-    // upper: angle <= max
-    // C = max - angle >= 0
-    C = limits.max_angle_rad - angle;   // < 0 when violated
 
-    // C = max - angle
-    // => Cdot = -angleDot = +(wA-wB)*axis
-    // => JwA = +axis, JwB = -axis
+    target_Cdot = -C / dt; // Still inside: allow approaching, but not fast enough to cross the limit.
+    if ( lower_violated )
+      target_Cdot *= settings->limits.beta; // Baumgarte recovery after an actual violation.
+  } else
+  if ( upper_active && !lower_active )
+  {
+    C = upper_C;
+    Cdot = -angle_dot;
+
     JwA =  axis;
     JwB = -axis;
 
     accumulated = &accumulated_upper_limit_impulse;
+    accumulated_lower_limit_impulse = 0.0; // // The lower limit is definitely inactive now
 
-    // The lower limit is definitely inactive now.
-    accumulated_lower_limit_impulse = 0.0;
+    target_Cdot = -C / dt; // Still inside: allow approaching, but not fast enough to cross the limit.
+    if ( upper_violated )
+      target_Cdot *= settings->limits.beta; // Baumgarte recovery after an actual violation.
   } else
   {
-    // Inside the allowed range - both one-sided constraints are inactive.
+    // Both active is only possible for invalid/crossed limits;
+    // neither active is the normal inside-range case.
+    // In both cases do not inject an ambiguous impulse.
     accumulated_lower_limit_impulse = 0.0;
     accumulated_upper_limit_impulse = 0.0;
-
     return false;
   }
 
-  Vector3 wA = objA->angular_speed;
-  Vector3 wB = objB->angular_speed;
+  Vector3 const IAJwA = objA->inertia_tensor_world_inv * JwA;
+  Vector3 const IBJwB = objB->inertia_tensor_world_inv * JwB;
 
-  double Cdot = JwA * wA + JwB * wB;
-
-  // The bias must push toward C -> 0.
-  double bias = settings->limits.beta * C / dt;
-
-  Vector3 IAJwA = objA->inertia_tensor_world_inv * JwA;
-  Vector3 IBJwB = objB->inertia_tensor_world_inv * JwB;
-
-  double K = JwA * IAJwA + JwB * IBJwB + settings->limits.softness;
+  double const K = JwA * IAJwA + JwB * IBJwB + settings->limits.softness;
   if ( std::abs( K ) < PHYS_EPSILON )
     return false;
 
-  double lambda = -(Cdot + bias) / K;
+  double lambda = (target_Cdot - Cdot) / K;
 
   // One-sided constraint: the accumulated impulse is clamped to [0, max].
-  double old_accumulated = *accumulated;
+  double const old_accumulated = *accumulated;
   double new_accumulated = old_accumulated + lambda;
   toRange( new_accumulated, 0.0, settings->limits.max_impulse );
   *accumulated = new_accumulated;
@@ -166,9 +174,9 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
   objA->applyAngularImpulse( impulseA );
   objB->applyAngularImpulse( impulseB );
 
-  // lambda is the SIGNED delta of the accumulated impulse: it is negative whenever the solver is releasing a limit it over-pushed on the previous iteration.
-  // That is just as much "still has error" as pushing, so the magnitude is what matters here.
-  return std::abs( lambda ) > settings->limits.min_error_for_impulse;
+  // A negative delta means the solver is releasing an over-correction;
+  // its magnitude still counts as work left for convergence.
+  return std::abs(lambda) > settings->limits.min_error_for_impulse;
 }
 
 } // namespace phys

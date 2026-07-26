@@ -98,10 +98,17 @@ void PhysicsWorld::subStep( double dt )
         co->applyGravity( settings.gravity.g, dt );
   }
 
-  // 2) Joint preparation (refreshes the world inertia) + contact detection.
+  // 2) Joint preparation refreshes the world inertia and builds the substep cache.
   for ( auto * co : objects )
     if ( !co->isSleeping() )
       co->prepareSolve( dt );
+
+  // 3) Open-loop actuators are external forces, not constraints.
+  // Apply them exactly once per substep, before contact detection,
+  // so the sampled impact velocity already includes the motion produced by the motors.
+  for ( auto * co : objects )
+    if ( !co->isSleeping() )
+      co->applyExternalActuatorImpulses( dt );
 
   // Contacts are detected BEFORE any warm start:
   // detectContacts() samples the approach velocity vn0 for restitution,
@@ -116,7 +123,7 @@ void PhysicsWorld::subStep( double dt )
   warmStartContacts();
 
 #ifdef USE_VELOCITY_SOLVER
-  // 3) The shared velocity solve: joints and contacts in one Gauss-Seidel loop.
+  // 4) The shared velocity solve: joints and contacts in one Gauss-Seidel loop.
   for ( int i = 0; i < settings.step.velocity_iterations; ++i )
   {
     velocity_solver_statistics.iterations_count = i + 1;
@@ -135,12 +142,12 @@ void PhysicsWorld::subStep( double dt )
   velocity_solver_statistics.update();
 #endif
 
-  // 4) Integration.
+  // 5) Integration.
   for ( auto * co : objects )
     if ( !co->isSleeping() )
       co->integrateVelocities( dt );
 
-  // 5) Position correction for the contacts and, optionally, the joints.
+  // 6) Position correction for the contacts and, optionally, the joints.
   for ( auto * co : objects )
     if ( !co->isSleeping() )
       co->updateInertia();
@@ -169,7 +176,7 @@ void PhysicsWorld::subStep( double dt )
 
   position_solver_statistics.update();
 
-  // 6) Finalization (quaternion normalization, world inertia, the total center of mass).
+  // 7) Finalization (quaternion normalization, world inertia, the total center of mass).
   for ( auto * co : objects )
     if ( !co->isSleeping() )
       co->finalizeStep();
@@ -269,9 +276,8 @@ void PhysicsWorld::detectContacts( double speculative_dt )
       cs.was_in_contact = false;
 
       cs.accumulated_normal_impulse = 0.0;
-      cs.accumulated_t1_impulse     = 0.0;
-      cs.accumulated_t2_impulse     = 0.0;
       cs.accumulated_spin_impulse   = 0.0;
+      cs.accumulated_tangent_impulse.reset();
       continue;
     }
 
@@ -292,9 +298,8 @@ void PhysicsWorld::detectContacts( double speculative_dt )
     {
       // The contact has just appeared - there is nothing to warm-start, reset the accumulators.
       cs.accumulated_normal_impulse = 0.0;
-      cs.accumulated_t1_impulse     = 0.0;
-      cs.accumulated_t2_impulse     = 0.0;
       cs.accumulated_spin_impulse   = 0.0;
+      cs.accumulated_tangent_impulse.reset();
 
       // Latch the arrival speed for restitution.
       // With speculative contacts the sphere is braked while it is still in the air, so by the time it truly touches,
@@ -302,15 +307,18 @@ void PhysicsWorld::detectContacts( double speculative_dt )
       cs.impact_vn = c.vn0;
     } else
     {
-      // If the normal has turned considerably, the old tangent friction belongs
-      // to a different tangent plane. Reset only the friction.
       double normal_dot = cs.prev_normal * tc.normal;
 
       if ( normal_dot < settings.contacts.normal_reset_dot )
       {
-        cs.accumulated_t1_impulse = 0.0;
-        cs.accumulated_t2_impulse = 0.0;
+        // The tangent plane changed too much to reuse the old friction safely.
+        cs.accumulated_tangent_impulse.reset();
         cs.accumulated_spin_impulse = 0.0;
+      } else
+      {
+        // Keep the old friction as a WORLD-space vector, but remove the component normal to the new contact plane.
+        // This makes warm starting independent of how buildOrthonormalBasisFromAxis() happened to choose (t1,t2).
+        cs.accumulated_tangent_impulse -= tc.normal * (cs.accumulated_tangent_impulse * tc.normal);
       }
     }
 
@@ -332,10 +340,7 @@ void PhysicsWorld::warmStartContacts()
   {
     ContactSphere & cs = *c.sphere;
 
-    Vector3 P =
-        c.normal * cs.accumulated_normal_impulse
-      + c.t1     * cs.accumulated_t1_impulse
-      + c.t2     * cs.accumulated_t2_impulse;
+    Vector3 P = c.normal * cs.accumulated_normal_impulse + cs.accumulated_tangent_impulse;
 
     cs.body->applyImpulseAtWorldPoint( P, c.point );
 
@@ -432,71 +437,57 @@ bool PhysicsWorld::solveContactsFrictionOnce()
 
     // ------------------------------------------------------------
     // The friction impulse with a circular Coulomb cone:
-    // two tangents, the clamp is |J_t| <= mu * J_n.
+    // |J_t| <= mu * J_n
+    //
+    // J_t is accumulated in WORLD space so it keeps its physical meaning when the arbitrary tangent basis is rebuilt.
     double max_friction = settings.contacts.friction_mu * cs.accumulated_normal_impulse;
     applyMin( max_friction, 0.0 );
 
-    // A local function: try to set the new accumulated tangent impulses,
-    // projecting them into the circle |Jt| <= mu * Jn.
+    // A local function: try to set the new accumulated tangent impulses, projecting them into the circle |Jt| <= mu * Jn.
     auto setProjectedFrictionImpulse =
-      [&]( double wanted_t1, double wanted_t2 ) -> bool
+      [&]( Vector3 wanted_impulse ) -> bool
       {
-        double old_t1 = cs.accumulated_t1_impulse;
-        double old_t2 = cs.accumulated_t2_impulse;
+        Vector3 const old_impulse = cs.accumulated_tangent_impulse;
 
-        double new_t1 = wanted_t1;
-        double new_t2 = wanted_t2;
+        // Numerical drift and a slowly turning normal can give the stored vector a small normal component.
+        // Friction must remain in the current tangent plane.
+        wanted_impulse -= c.normal * (wanted_impulse * c.normal);
+        wanted_impulse.limitLength( max_friction );
 
-        double len = sqrt( sqr(new_t1) + sqr(new_t2) );
+        cs.accumulated_tangent_impulse = wanted_impulse;
 
-        if ( len > max_friction && len > PHYS_EPSILON )
-        {
-          double scale = max_friction / len;
-          new_t1 *= scale;
-          new_t2 *= scale;
-        }
+        Vector3 const delta = wanted_impulse - old_impulse;
+        double delta_len = delta.length();
 
-        double delta_t1 = new_t1 - old_t1;
-        double delta_t2 = new_t2 - old_t2;
+        if ( !isZero( delta_len, PHYS_EPSILON ) )
+          b.applyImpulseAtWorldPoint( delta, c.point );
 
-        cs.accumulated_t1_impulse = new_t1;
-        cs.accumulated_t2_impulse = new_t2;
-
-        Vector3 impulse = c.t1 * delta_t1 + c.t2 * delta_t2;
-
-        if ( !isZero( impulse.lengthSqr(), PHYS_EPSILON_SQR ) )
-          b.applyImpulseAtWorldPoint( impulse, c.point );
-
-        return std::abs( delta_t1 ) > settings.contacts.min_error_for_friction_impulse
-            || std::abs( delta_t2 ) > settings.contacts.min_error_for_friction_impulse;
+        return delta_len > settings.contacts.min_error_for_friction_impulse;
       };
 
-    // Important: if the normal impulse has decreased, the old friction may exceed
-    // the new limit. Squeeze the old accumulated friction first.
-    if ( setProjectedFrictionImpulse( cs.accumulated_t1_impulse, cs.accumulated_t2_impulse ) )
+    // If the normal impulse decreased, the old friction may exceed the new cone.
+    // Squeeze the old accumulated friction first.
+    if ( setProjectedFrictionImpulse( cs.accumulated_tangent_impulse ) )
       has_error = true;
 
-    // Solve t1.
+    // Solve one scalar row at a time, but accumulate their result as one world vector.
     if ( c.kt1 > PHYS_EPSILON && max_friction > 0.0 )
     {
-      Vector3 v = b.pointVelocityWorld( c.point );
-      double vt1 = v * c.t1;
+      Vector3 const v = b.pointVelocityWorld( c.point );
+      double const vt1 = v * c.t1;
+      double const lambda_t1 = -vt1 / c.kt1;
 
-      double lambda_t1 = -vt1 / c.kt1;
-
-      if ( setProjectedFrictionImpulse( cs.accumulated_t1_impulse + lambda_t1, cs.accumulated_t2_impulse ) )
+      if ( setProjectedFrictionImpulse( cs.accumulated_tangent_impulse + c.t1 * lambda_t1 ) )
         has_error = true;
     }
 
-    // Solve t2.
     if ( c.kt2 > PHYS_EPSILON && max_friction > 0.0 )
     {
-      Vector3 v = b.pointVelocityWorld( c.point );
-      double vt2 = v * c.t2;
+      Vector3 const v = b.pointVelocityWorld( c.point );
+      double const vt2 = v * c.t2;
+      double const lambda_t2 = -vt2 / c.kt2;
 
-      double lambda_t2 = -vt2 / c.kt2;
-
-      if ( setProjectedFrictionImpulse( cs.accumulated_t1_impulse, cs.accumulated_t2_impulse + lambda_t2 ) )
+      if ( setProjectedFrictionImpulse( cs.accumulated_tangent_impulse + c.t2 * lambda_t2 ) )
         has_error = true;
     }
 

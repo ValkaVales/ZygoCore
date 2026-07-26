@@ -21,9 +21,11 @@ struct ContactSphere
 
   // Accumulated impulses for warm-starting between frames.
   double accumulated_normal_impulse = 0.0;
-  double accumulated_t1_impulse     = 0.0;
-  double accumulated_t2_impulse     = 0.0;
   double accumulated_spin_impulse   = 0.0; // angular, about the contact normal
+
+  // Stored in WORLD space so a rebuilt (t1,t2) basis cannot reinterpret two old scalar components as a different friction impulse.
+  // It is projected onto the current tangent plane whenever the contact normal changes.
+  Vector3 accumulated_tangent_impulse;
 
   bool was_in_contact = false;
 

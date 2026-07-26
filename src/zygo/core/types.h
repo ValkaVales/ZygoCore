@@ -27,10 +27,10 @@ constexpr int U64_SZ      = 8;
 constexpr int DOUBLE_SZ   = sizeof( double );
 
 
-//#define FLOAT_MNUMBER // Comment this to use double, uncomment - to use float
+//#define FLOAT_NUMBER // Comment this to use double, uncomment - to use float
 
 
-#ifdef FLOAT_MNUMBER
+#ifdef FLOAT_NUMBER
 typedef float Real;
 
 constexpr Real REAL_ZERO      = 0.0f;

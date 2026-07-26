@@ -44,17 +44,13 @@ void HingeJoint::setMotorPosition( double target_angle_rad, double max_torque, d
   motor_max_velocity  = std::abs( max_velocity_rad );
 }
 
-// Idea of this mode:   (see solveMotorVelocityConstraint)
-// new_accumulated_impulse = target_torque * dt;
-// lambda = new_accumulated_impulse - accumulated_motor_impulse;
-// accumulated_motor_impulse = new_accumulated_impulse;
-// applyImpulse( lambda );
+// Open-loop torque is applied once per substep by applyExternalActuatorImpulse().
+// Keeping it outside the iterative solver makes the injected angular impulse exactly torque*dt, independent of velocity_iterations.
 void HingeJoint::setMotorTorque( double torque )
 {
   requestWake();
 
   ZgAssert( std::isfinite( torque ) );
-  ZgAssert( torque > 0.0 );
 
   setMotorMode( MOTOR_TORQUE );
   motor_target_torque = torque;
@@ -74,9 +70,24 @@ void HingeJoint::disableMotor()
   accumulated_motor_impulse = 0.0;
 }
 
+void HingeJoint::applyExternalActuatorImpulse( double dt )
+{
+  if ( motor_mode != MOTOR_TORQUE )
+    return;
+
+  ZgAssertRelease( cache_valid );
+  ZgAssertRelease( std::isfinite( dt ) && dt > 0.0 );
+
+  // Positive torque increases currentHingeAngle(): objB receives +axis*J and objA receives the equal-and-opposite reaction.
+  Vector3 const angular_impulse = cached_axis_A * (motor_target_torque * dt);
+
+  objA->applyAngularImpulse( -angular_impulse );
+  objB->applyAngularImpulse(  angular_impulse );
+}
+
 void HingeJoint::prepareVelocitySolve( double dt )
 {
-  // The motor and the limits are re-derived from scratch every substep
+  // The servo motor and the limits are re-derived from scratch every substep
   // (they are one-sided / torque-capped, so a stale accumulator would be a wrong clamp, not a good guess).
   // The anchor and axis accumulators are NOT touched here - warm starting them across substeps is the whole point.
   accumulated_motor_impulse       = 0.0;
@@ -109,27 +120,10 @@ bool HingeJoint::solveMotorVelocityConstraint( double dt )
   // Constant during the velocity loop - see prepareVelocitySolve().
   Vector3 const & axis = cached_axis_A;
 
+  // MOTOR_TORQUE is handled once per substep by applyExternalActuatorImpulse().
+  // Only the velocity/position servo modes belong to the iterative constraint solve.
   if ( motor_mode == MOTOR_TORQUE )
-  {
-    // A torque source is not a constraint: over the whole step it must inject exactly torque*dt of angular impulse, no matter how the solver behaves around it.
-    //
-    // But this function is called once per Gauss-Seidel ITERATION, so injecting the impulse directly here would multiply it by velocity_iterations.
-    // Reusing the same accumulator as the other modes solves that: the total is pinned to torque*dt, the first iteration applies all of it and every later one applies a zero delta.
-    // prepareVelocitySolve() clears the accumulator once per step, so the budget is fresh every time.
-    double const old_impulse = accumulated_motor_impulse;
-
-    accumulated_motor_impulse = motor_target_torque * dt;
-
-    double const lambda = accumulated_motor_impulse - old_impulse;
-
-    Vector3 const torque_impulse = axis * lambda;
-
-    objA->applyAngularImpulse( -torque_impulse );
-    objB->applyAngularImpulse(  torque_impulse );
-
-    // No target velocity, so nothing to report as an error.
     return false;
-  }
 
   double Cdot = curAngleVelocity();
 
