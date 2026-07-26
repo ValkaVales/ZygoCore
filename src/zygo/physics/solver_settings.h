@@ -39,6 +39,22 @@ struct StepSettings
 // ------------------------------------------------------------------ hinge joints
 struct JointSettings
 {
+  // ---- warm starting ----
+  // Re-apply last substep's accumulated anchor/axis impulse before the Gauss-Seidel
+  // loop starts. A joint under a steady load carries almost the same impulse from one
+  // substep to the next, so this hands the solver a nearly converged starting point
+  // and the iterations only have to fix the residual.
+  //
+  // Turn it off to A/B against the old cold-start behaviour.
+  bool warm_starting = true;
+
+  // How much of the stored impulse is actually re-applied. 1.0 is the textbook value and
+  // is right once the solver gets enough iterations to settle. Below ~8 iterations the
+  // warm start lands before the neighbouring constraints have had a chance to react, and
+  // damping it trades a little stiffness for a much smaller transient - the same knob
+  // Bullet exposes as m_warmstartingFactor.
+  double warm_start_factor = 0.85;
+
   // ---- velocity solver (Baumgarte bias) ----
   double position_beta = 0.37;  // Baumgarte share for the anchor position error
   double angular_beta  = 0.2;   // Baumgarte share for the axis tilt error

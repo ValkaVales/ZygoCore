@@ -56,7 +56,8 @@ public:
 
   // Granular step phases - the PhysicsWorld interleaves joint and contact passes in one solve loop.
   void applyGravity( Vector3 const & g, double dt );
-  void prepareSolve();                    // updateInertia + prepareVelocitySolve for the joints
+  void prepareSolve   ( double dt );      // updateInertia + prepareVelocitySolve for the joints
+  void warmStartJoints( double dt );      // re-applies the joints' accumulated impulses
   void updateInertia();
 
   bool solveVelocitiesOnce( double dt );  // one Gauss-Seidel pass over the joints

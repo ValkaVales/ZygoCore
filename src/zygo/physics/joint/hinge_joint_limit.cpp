@@ -76,10 +76,9 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
   if ( !limit_enabled )
     return false;
 
-  Vector3 axis = worldAxisA();
-  axis = Vector3::safeNormalized( axis );
-
-  double angle = currentHingeAngle();
+  // Both are constants of the substep - see prepareVelocitySolve().
+  Vector3 const & axis  = cached_axis_A;
+  double  const   angle = cached_hinge_angle;
 
   // Solving the inequality C >= 0:
   // lower limit: angle >= min_angle  ->  C = angle - min_angle

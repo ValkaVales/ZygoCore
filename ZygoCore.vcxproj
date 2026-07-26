@@ -199,6 +199,9 @@
     <ClCompile Include="src\zygo\physics\joint\hinge_joint.cpp" />
     <ClCompile Include="src\zygo\physics\joint\hinge_joint_limit.cpp" />
     <ClCompile Include="src\zygo\physics\joint\hinge_joint_motor.cpp" />
+    <ClCompile Include="src\zygo\physics\joint\hinge_joint_position_solver.cpp" />
+    <ClCompile Include="src\zygo\physics\joint\hinge_joint_velocity_solver.cpp" />
+    <ClCompile Include="src\zygo\physics\joint\hinge_joint_warm_start.cpp" />
     <ClCompile Include="src\zygo\physics\joint\joint_limits.cpp" />
     <ClCompile Include="src\zygo\physics\phys_math.cpp" />
     <ClCompile Include="src\zygo\physics\shape\shape.cpp" />

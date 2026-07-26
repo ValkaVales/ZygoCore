@@ -77,9 +77,16 @@ void PhysicsWorld::subStep( double dt )
 
   // 2) Joint preparation (refreshes the world inertia) + contact detection.
   for ( auto * co : objects )
-    co->prepareSolve();
+    co->prepareSolve( dt );
 
+  // Contacts are detected BEFORE any warm start:
+  // detectContacts() samples the approach velocity vn0 for restitution,
+  // and that has to be the speed the foot actually arrives with, not the speed left over after last substep's impulses have been re-applied.
   detectContacts();
+
+  for ( auto * co : objects )
+    co->warmStartJoints( dt );
+
   warmStartContacts();
 
 #ifdef USE_VELOCITY_SOLVER

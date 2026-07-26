@@ -315,6 +315,15 @@
     <ClCompile Include="src\zygo\physics\solver_statistics.cpp">
       <Filter>zygo\physics</Filter>
     </ClCompile>
+    <ClCompile Include="src\zygo\physics\joint\hinge_joint_warm_start.cpp">
+      <Filter>zygo\physics\joint</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\joint\hinge_joint_velocity_solver.cpp">
+      <Filter>zygo\physics\joint</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\physics\joint\hinge_joint_position_solver.cpp">
+      <Filter>zygo\physics\joint</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zygo\app\sim_clock.h">

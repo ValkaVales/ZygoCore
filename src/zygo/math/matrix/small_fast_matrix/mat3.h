@@ -508,7 +508,8 @@ struct Mat3 final
     const Real det = m[0] * c00 + m[3] * c01 + m[6] * c02;
 
     // Written as !( > ) so that a NaN determinant is rejected too.
-    if ( !( std::fabs( det ) > determinantEpsilon( rel_eps ) ) )
+    //if ( !( std::fabs( det ) > determinantEpsilon( rel_eps ) ) )
+    if ( !( std::fabs( det ) > rel_eps ) )
       return false;
 
     const Real inv_det = REAL_ONE / det;
@@ -555,7 +556,8 @@ struct Mat3 final
     const Real det = m[0] * c00 + m[3] * c01 + m[6] * c02;
 
     // Written as !( > ) so that a NaN determinant is rejected too.
-    if ( !( std::fabs( det ) > determinantEpsilon( rel_eps ) ) )
+    //if ( !( std::fabs( det ) > determinantEpsilon( rel_eps ) ) )
+    if ( !( std::fabs( det ) > rel_eps ) )
       return false;
 
     const Real inv_det = REAL_ONE / det;
@@ -581,17 +583,14 @@ struct Mat3 final
     return true;
   }
 
-  // Быстрый solver для symmetric positive definite матриц.
+  // A fast solver for symmetric positive definite matrices.
+  // Very useful for effective mass matrix constraints: K * lambda = rhs
   //
-  // Очень полезен для effective mass matrix в constraints:
+  // Requirements:
+  // - the matrix must be symmetric;
+  // - the matrix must be positive definite.
   //
-  // K * lambda = rhs
-  //
-  // Требования:
-  // - матрица должна быть симметричной;
-  // - матрица должна быть положительно определённой.
-  //
-  // Использует нижний треугольник:
+  // Uses the lower triangle:
   //
   // [ m00  *   *  ]
   // [ m10 m11  *  ]
@@ -609,7 +608,7 @@ struct Mat3 final
     const Real a22 = m[8];
 
     // The pivots are first-order in the matrix magnitude, so they are compared against pivotEpsilon(), not against a fixed number.
-    const Real pivot_eps = pivotEpsilon( rel_eps );
+    const Real pivot_eps = rel_eps;// pivotEpsilon( rel_eps );
 
     if ( !( a00 > pivot_eps ) )
       return false;
@@ -678,7 +677,7 @@ struct Mat3 final
     ZgAssert( isSymmetric( rel_eps * 10 ) );
 
     // The pivots are first-order in the matrix magnitude - see "Scale-relative tolerances".
-    const Real pivot_eps = pivotEpsilon( rel_eps );
+    const Real pivot_eps = rel_eps;// pivotEpsilon( rel_eps );
 
     // ---- factorization ----
     const Real d0 = m[0];
@@ -740,16 +739,17 @@ struct Mat3 final
   // so an absolute eps either rejects every large tensor or accepts every small non-symmetric one.
   bool isSymmetric( Real rel_eps = EPSILON ) const noexcept
   {
-    const Real e = pivotEpsilon( rel_eps );
+    const Real eps = pivotEpsilon( rel_eps );
 
     return
-      eq( m[1], m[3], e ) &&
-      eq( m[2], m[6], e ) &&
-      eq( m[5], m[7], e );
+      eq( m[1], m[3], eps ) &&
+      eq( m[2], m[6], eps ) &&
+      eq( m[5], m[7], eps );
   }
 
-  // SPD = Symmetric Positive Definite (симметричная положительно определённая).
-  // Критерий Сильвестра: все угловые миноры > 0. Работает ТОЛЬКО вместе с проверкой симметрии - для несимметричных матриц критерий неприменим.
+  // SPD = Symmetric Positive Definite.
+  // Sylvester's criterion: all corner minors > 0.
+  // Works ONLY in conjunction with the symmetry check - for asymmetric matrices, the criterion is unacceptable.
   bool isSPD( Real rel_eps = EPSILON ) const noexcept
   {
     if ( !isSymmetric( rel_eps ) )

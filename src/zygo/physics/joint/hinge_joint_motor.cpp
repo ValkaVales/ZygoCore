@@ -48,11 +48,30 @@ void HingeJoint::disableMotor()
   accumulated_motor_impulse = 0.0;
 }
 
-void HingeJoint::prepareVelocitySolve()
+void HingeJoint::prepareVelocitySolve( double dt )
 {
+  // The motor and the limits are re-derived from scratch every substep
+  // (they are one-sided / torque-capped, so a stale accumulator would be a wrong clamp, not a good guess).
+  // The anchor and axis accumulators are NOT touched here - warm starting them across substeps is the whole point.
   accumulated_motor_impulse       = 0.0;
   accumulated_lower_limit_impulse = 0.0;
   accumulated_upper_limit_impulse = 0.0;
+
+  cache_valid = false;
+
+  if ( objA == nullptr || objB == nullptr || settings == nullptr )
+    return;
+
+  // Constants of the substep, shared by the anchor, axis, motor and limit solvers.
+  cached_axis_A      = worldAxisA();
+  cached_hinge_angle = currentHingeAngle();
+
+  ZgAssertRelease( cached_axis_A.isNormalized() );
+
+  prepareAnchorConstraint( dt );
+  prepareAxisConstraint  ( dt );
+
+  cache_valid = true;
 }
 
 bool HingeJoint::solveMotorVelocityConstraint( double dt )
@@ -60,8 +79,8 @@ bool HingeJoint::solveMotorVelocityConstraint( double dt )
   if ( motor_mode == MOTOR_OFF )
     return false;
 
-  Vector3 axis = worldAxisA();
-  axis = Vector3::safeNormalized( axis );
+  // Constant during the velocity loop - see prepareVelocitySolve().
+  Vector3 const & axis = cached_axis_A;
 
   if ( motor_mode == MOTOR_TORQUE )
   {
@@ -98,7 +117,7 @@ bool HingeJoint::solveMotorVelocityConstraint( double dt )
   {
     // Constraint:
     // C = currentAngle - targetAngle = 0
-    double C = currentHingeAngle() - motor_target_angle;
+    double C = cached_hinge_angle - motor_target_angle;
 
     // Baumgarte/ERP: remove a fraction of the error per step.
     double bias = settings->motor.position_erp * C / dt;
@@ -141,6 +160,8 @@ bool HingeJoint::solveMotorVelocityConstraint( double dt )
 
 double HingeJoint::hingeAngularMassInv() const
 {
+  // Public API: recomputed rather than read from the cache, so that it stays correct for callers outside the solver
+  // (for example: MotorJointController::angularMassInv(), diagnostics).
   Vector3 axis = worldAxisA();
 
   Vector3 IA = objA->inertia_tensor_world_inv * axis;

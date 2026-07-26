@@ -57,14 +57,22 @@ void ArticulatedBody::applyGravity( Vector3 const & g, double dt )
     obj->applyGravity( g, dt );
 }
 
-void ArticulatedBody::prepareSolve()
+void ArticulatedBody::prepareSolve( double dt )
 {
   ZgAssert( initialized );
 
   updateInertia();
 
   for ( auto & joint : joints )
-    joint->prepareVelocitySolve();
+    joint->prepareVelocitySolve( dt );
+}
+
+void ArticulatedBody::warmStartJoints( double dt )
+{
+  ZgAssert( initialized );
+
+  for ( auto & joint : joints )
+    joint->warmStartVelocitySolve( dt );
 }
 
 bool ArticulatedBody::solveVelocitiesOnce( double dt )
@@ -118,7 +126,8 @@ void ArticulatedBody::processTick( double dt )
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  prepareSolve();
+  prepareSolve( dt );
+  warmStartJoints( dt );
 
 #ifdef USE_VELOCITY_SOLVER
   for ( int i = 0; i < VELOCITY_MAX_ITERATIONS_COUNT; ++i )

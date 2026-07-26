@@ -4,6 +4,7 @@
 // with optional angle limits and a velocity/position/torque motor.
 
 #include <zygo/math/vector/vec3.h>
+#include <zygo/math/matrix/small_fast_matrix/mat3.h>
 #include <zygo/physics/joint/joint_limits.h>
 #include <zygo/physics/solver_settings.h>
 #include <zygo/physics/i_physics_drawer.h>
@@ -68,6 +69,45 @@ private:
 
   double accumulated_motor_impulse = 0.0;
 
+  // ------------------------------------------------------------------ per-substep cache
+  // Nothing MOVES during the velocity loop - only velocities change; positions and orientations are updated afterwards, in integrateVelocities().
+  // So the anchor points, the Jacobian, the effective mass and the Baumgarte bias are all constants of the substep, and prepareVelocitySolve() computes them once.
+  //
+  // That is not only cheaper (the effective mass is inverted once instead of once per iteration):
+  // sequential impulses converges to the solution of ONE linear system, and re-deriving the system on every iteration is not quite that system.
+  bool    cache_valid = false;
+
+  Vector3 cached_axis_A;       // world hinge axis of A, normalized
+  double  cached_hinge_angle = 0.0;
+
+  // anchor constraint (3 linear rows)
+  bool    anchor_valid = false;
+  Vector3 anchor_point;        // shared application point for +J and -J
+  Vector3 anchor_rA;
+  Vector3 anchor_rB;
+  Mat3    anchor_K_inv;        // inverse effective mass
+  Vector3 anchor_bias;
+
+  // axis constraint (2 angular rows)
+  bool    axis_valid = false;
+  Vector3 axis_g1;
+  Vector3 axis_g2;
+  double  axis_inv_K11 = 0.0;  // inverse of the 2x2 effective mass
+  double  axis_inv_K12 = 0.0;
+  double  axis_inv_K21 = 0.0;
+  double  axis_inv_K22 = 0.0;
+  double  axis_bias1   = 0.0;
+  double  axis_bias2   = 0.0;
+
+  // ------------------------------------------------------------------ warm starting
+  // Total impulse the constraint applied over the last substep, kept in WORLD space so that it does not depend on the tangent basis, which is rebuilt every substep.
+  Vector3 accumulated_anchor_impulse;
+  Vector3 accumulated_axis_impulse;   // angular
+
+  // The substep dt the accumulators were built with.
+  // An impulse is force*dt, so a stored one only means the same thing at the same dt - it is rescaled when the step changes and dropped entirely on the very first substep.
+  double accumulated_impulse_dt = 0.0;
+
 public:
   HingeJoint() = delete;
 
@@ -106,7 +146,13 @@ public:
 
   void disableMotor();
 
-  void prepareVelocitySolve();
+  // Rebuilds the per-substep cache above and resets the motor/limit accumulators.
+  // Call once per substep, AFTER the world inertia has been refreshed.
+  void prepareVelocitySolve( double dt );
+
+  // Re-applies the accumulated anchor/axis impulses.
+  // Separate from prepareVelocitySolve() so that the world can run it next to warmStartContacts(), i.e. after contact detection has sampled the approach velocities.
+  void warmStartVelocitySolve( double dt );
 
   double hingeAngularMassInv() const;
 
@@ -123,6 +169,9 @@ public:
   void draw( IPhysicsDrawer const& drawer, double axis_length ) const;
 
 private:
+  void prepareAnchorConstraint( double dt );
+  void prepareAxisConstraint  ( double dt );
+
 #ifdef USE_VELOCITY_SOLVER
 #ifdef DEBUG_CONSERVATION_CHECKS
   Vector3 calcTotalL() const;
@@ -149,6 +198,16 @@ private:
     Vector3 const & a,
     Vector3 const & b,
     Vector3 const & axis_unit
+  );
+
+  static Mat3 computeAnchorEffectiveMass(
+    double inv_mass_A,
+    double inv_mass_B,
+    Vector3 const& rA,
+    Vector3 const& rB,
+    Mat3 const& inv_IA,
+    Mat3 const& inv_IB,
+    double softness
   );
 };
 
