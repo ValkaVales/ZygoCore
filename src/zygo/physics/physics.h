@@ -19,6 +19,10 @@
 #include <zygo/physics/solver_settings.h>
 #include <zygo/physics/i_physics_drawer.h>
 #include <zygo/physics/shape/shape.h>
+#include <zygo/physics/shape/shape_box.h>
+#include <zygo/physics/shape/shape_sphere.h>
+#include <zygo/physics/shape/shape_cylinder.h>
+#include <zygo/physics/shape/shape_capsule.h>
 #include <zygo/physics/body/rigid_body.h>
 #include <zygo/physics/body/articulated_body.h>
 #include <zygo/physics/joint/hinge_joint.h>

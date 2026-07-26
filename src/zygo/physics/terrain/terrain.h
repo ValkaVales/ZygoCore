@@ -17,7 +17,12 @@ struct TerrainContact
   bool    hit         = false;
   Vector3 normal;             // unit, out of the ground (up, toward the sphere center)
   Vector3 point;              // the contact point on the surface, in the world
-  double  penetration = 0.0;  // > 0 => the sphere penetrates the ground
+  double  penetration = 0.0;  // > 0 => the sphere penetrates the ground; clamped at 0
+
+  // The SIGNED gap: separation > 0 means the sphere has not touched yet and is only inside the query margin.
+  // Speculative contacts need this, and `penetration` cannot carry it because it is clamped at zero (and every existing user relies on that).
+  //   separation == -penetration whenever they overlap.
+  double separation  = 0.0;
 };
 
 

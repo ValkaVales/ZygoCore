@@ -146,6 +146,76 @@ void ArticulatedBody::processTick( double dt )
   total_calc_time += std::chrono::duration_cast<std::chrono::microseconds>( end - start ).count();
 }
 
+// --------------------------------------------------------------------------- sleeping
+void ArticulatedBody::wakeUp()
+{
+  is_sleeping = false;
+  idle_time   = 0.0;
+
+  for ( auto & obj : objects )
+    obj->setSleeping( false );
+}
+
+void ArticulatedBody::updateSleepState( SleepSettings const & sleep_settings, double dt )
+{
+  ZgAssert( initialized );
+
+  // A joint command always wins, even while the feature is off - the flags have to be
+  // consumed either way, or a stale one would wake the assembly much later.
+  bool commanded = false;
+
+  for ( auto & joint : joints )
+    if ( joint->consumeWakeRequest() )
+      commanded = true;
+
+  if ( !sleep_settings.enabled )
+  {
+    if ( is_sleeping )
+      wakeUp();
+
+    idle_time = 0.0;
+    return;
+  }
+
+  if ( commanded )
+  {
+    wakeUp();
+    return;
+  }
+
+  if ( is_sleeping )
+    return;
+
+  // Every body has to be quiet. One that is not resets the timer for the whole assembly:
+  // the bodies are rigidly coupled, so a moving shin means the trunk is not at rest
+  // either, it just happens to be near the instantaneous center of the motion.
+  double const lin_sqr = sqr( sleep_settings.linear_velocity_threshold );
+  double const ang_sqr = sqr( sleep_settings.angular_velocity_threshold );
+
+  for ( auto const & obj : objects )
+  {
+    if ( obj->isStatic() )
+      continue;
+
+    if ( obj->linearSpeed ().lengthSqr() > lin_sqr
+      || obj->angularSpeed().lengthSqr() > ang_sqr )
+    {
+      idle_time = 0.0;
+      return;
+    }
+  }
+
+  idle_time += dt;
+
+  if ( idle_time < sleep_settings.time_to_sleep )
+    return;
+
+  is_sleeping = true;
+
+  for ( auto & obj : objects )
+    obj->setSleeping( true );
+}
+
 void ArticulatedBody::updateTotalCenterOfMass()
 {
   ZgAssert( initialized );

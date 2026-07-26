@@ -533,5 +533,8 @@
     <ClInclude Include="src\zygo\physics\solver_statistics.h">
       <Filter>zygo\physics</Filter>
     </ClInclude>
+    <ClInclude Include="src\zygo\physics\solver_settings.h">
+      <Filter>zygo\physics</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

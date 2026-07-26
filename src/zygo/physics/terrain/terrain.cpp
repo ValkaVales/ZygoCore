@@ -43,6 +43,7 @@ TerrainContact FlatGround::querySphere( Vector3 const & center, double radius, d
   tc.normal       = Vector3( 0.0, 0.0, 1.0 );
   tc.point        = Vector3( center.x, center.y, ground_z );
   tc.penetration  = std::max( 0.0, penetration );
+  tc.separation   = -penetration; // > 0 => within the margin but not touching yet
 
   return tc;
 }
@@ -177,6 +178,7 @@ TerrainContact HeightField::querySphere( Vector3 const & center, double radius, 
   tc.normal      = n;
   tc.point       = center - n * dist; // the closest point on the surface
   tc.penetration = std::max( 0.0, penetration );
+  tc.separation  = -penetration; // > 0 => within the margin but not touching yet
 
   return tc;
 }

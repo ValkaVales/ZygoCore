@@ -20,6 +20,7 @@ class RigidBody
 private:
   bool initialized;
   bool is_static;
+  bool is_sleeping;
 
   Vector3 center_of_mass_pos;
   Quaternion rotation_quaternion;
@@ -65,12 +66,30 @@ public:
 
   inline bool isStatic() const { return is_static || inv_mass == 0.0; }
 
+  // True once rebuildPhysicalParameters_afterAllShapesAdded() has run, i.e. once the mass,
+  // the center of mass and the inertia tensor are known and the shapes have been shifted
+  // to be relative to the center of mass. Everything that converts world <-> local is only
+  // meaningful after that point.
+  inline bool isInitialized() const { return initialized; }
+
+  // ------------------------------------------------------------------ sleeping
+  // Set by the owning ArticulatedBody, which makes the decision for the whole assembly
+  // (see SleepSettings). A sleeping body is skipped by gravity, the solver and the
+  // integrator, and its contact spheres are not queried against the terrain.
+  void setSleeping( bool on );
+
+  inline bool isSleeping() const { return is_sleeping; }
+
   // Gravity/external forces: adds an acceleration to the linear speed.
   void applyGravity( Vector3 const & gravity, double dt );
 
   // Inverse effective mass J * M^-1 * J^T along the (unit) direction dir at world_point.
   // For the contact solver.
   double invEffectiveMassAlong( Vector3 const & world_point, Vector3 const & dir ) const;
+
+  // Inverse effective ANGULAR mass about the (unit) axis: axis * ( I_world^-1 * axis ).
+  // For the torsional friction of a contact - the rotational twin of the above.
+  double invAngularEffectiveMassAbout( Vector3 const & axis ) const;
 
   // ------------------------------------------------------------------ construction (grams / millimeters)
   void addBoxBySegment(
@@ -137,6 +156,11 @@ public:
 
   inline double getMass() const { return total_mass; }
   inline Vector3 const & centerOfMassPos() const { return center_of_mass_pos; }
+
+  inline Vector3 const & linearSpeed () const { return speed; }
+  inline Vector3 const & angularSpeed() const { return angular_speed; }
+
+  inline Quaternion const & rotationQuaternion() const { return rotation_quaternion; }
 
   // Momentum, angular momentum (about the given system center of mass) and kinetic energy of this body.
   void calcMainPhysicalParameters( Vector3 const & total_center_of_mass_pos, Vector3 & momentum, Vector3 & angular_momentum, double & kinetic_energy ) const;

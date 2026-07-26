@@ -28,6 +28,9 @@ private:
   Vector3 initial_total_center_of_mass;
   Vector3 cur_total_center_of_mass;
 
+  bool   is_sleeping  = false;
+  double idle_time    = 0.0; // how long every body has been under the sleep thresholds
+
   SolverStatistics velocity_solver_statistics;
   SolverStatistics position_solver_statistics;
 
@@ -65,6 +68,18 @@ public:
   bool solvePositionsOnce();
 
   void finalizeStep();                    // quaternion normalization + world inertia + the total center of mass
+
+  // ------------------------------------------------------------------ sleeping
+  // A sleeping assembly is skipped by every step phase, so a standing robot costs
+  // nothing. See SleepSettings for what wakes it - in short: a motor command on any of
+  // its joints, or an explicit wakeUp(). Nothing else does, so call wakeUp() yourself
+  // after applying an impulse, moving a body or changing the terrain under it.
+  inline bool isSleeping() const { return is_sleeping; }
+
+  void wakeUp();
+
+  // Called once per full step (not per substep) by the PhysicsWorld.
+  void updateSleepState( SleepSettings const & sleep_settings, double dt );
 
   // Draws all bodies; joint axes are drawn only when joints_axis_length > 0 (meters).
   virtual void draw( IPhysicsDrawer const& drawer, double joints_axis_length = 0.0 ) const;

@@ -12,6 +12,7 @@ namespace phys {
 RigidBody::RigidBody( uint color )
   : initialized ( false )
   , is_static   ( false )
+  , is_sleeping ( false )
 
   , total_mass  ( 0.0 )
   , inv_mass    ( 0.0 )
@@ -182,12 +183,32 @@ void RigidBody::syncAngularMomentumFromAngularSpeed()
   // The hook is kept so that switching to an L-based representation stays a local change.
 }
 
+void RigidBody::setSleeping( bool on )
+{
+  is_sleeping = on;
+
+  if ( on )
+  {
+    // A sleeping body must not carry a residual drift: it is not integrated, so whatever is left in the velocities would be released the moment it wakes up.
+    speed        .reset();
+    angular_speed.reset();
+  }
+}
+
 void RigidBody::applyGravity( Vector3 const & gravity, double dt )
 {
-  if ( isStatic() )
+  if ( isStatic() || is_sleeping )
     return;
 
   speed += gravity * dt;
+}
+
+double RigidBody::invAngularEffectiveMassAbout( Vector3 const & axis ) const
+{
+  if ( isStatic() )
+    return 0.0;
+
+  return axis * (inertia_tensor_world_inv * axis);
 }
 
 double RigidBody::invEffectiveMassAlong( Vector3 const & world_point, Vector3 const & dir ) const

@@ -69,6 +69,8 @@ private:
 
   double accumulated_motor_impulse = 0.0;
 
+  bool wake_requested = false;
+
   // ------------------------------------------------------------------ per-substep cache
   // Nothing MOVES during the velocity loop - only velocities change; positions and orientations are updated afterwards, in integrateVelocities().
   // So the anchor points, the Jacobian, the effective mass and the Baumgarte bias are all constants of the substep, and prepareVelocitySolve() computes them once.
@@ -121,6 +123,13 @@ public:
     SolverSettings const * settings
   );
 
+  // ------------------------------------------------------------------ sleeping
+  // Set by every command that changes what this joint is trying to do. The owning
+  // ArticulatedBody consumes it once per step and wakes the whole assembly - otherwise a
+  // sleeping robot would silently ignore the first command it is given.
+  inline bool consumeWakeRequest() { bool r = wake_requested; wake_requested = false; return r; }
+  inline void requestWake()        { wake_requested = true; }
+
   void enableAngleLimit( JointLimits limits );
 
   double currentHingeAngle() const;
@@ -168,6 +177,7 @@ public:
   // Draws the joint axis at both anchors.
   void draw( IPhysicsDrawer const& drawer, double axis_length ) const;
 
+// ------------------------------------------------------------------------------------------------------------------------ private methods
 private:
   void prepareAnchorConstraint( double dt );
   void prepareAxisConstraint  ( double dt );
@@ -187,6 +197,7 @@ private:
 #endif
 
   bool solveMotorVelocityConstraint( double dt );
+  void setMotorMode( MotorMode mode );
 
   // hinge angle limits
   Vector3 worldRefA() const;

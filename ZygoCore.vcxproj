@@ -279,6 +279,7 @@
     <ClInclude Include="src\zygo\physics\shape\shape_capsule.h" />
     <ClInclude Include="src\zygo\physics\shape\shape_cylinder.h" />
     <ClInclude Include="src\zygo\physics\shape\shape_sphere.h" />
+    <ClInclude Include="src\zygo\physics\solver_settings.h" />
     <ClInclude Include="src\zygo\physics\solver_statistics.h" />
     <ClInclude Include="src\zygo\physics\terrain\terrain.h" />
     <ClInclude Include="src\zygo\physics\world\contact_point.h" />

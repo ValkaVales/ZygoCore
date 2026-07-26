@@ -23,8 +23,14 @@ struct ContactSphere
   double accumulated_normal_impulse = 0.0;
   double accumulated_t1_impulse     = 0.0;
   double accumulated_t2_impulse     = 0.0;
+  double accumulated_spin_impulse   = 0.0; // angular, about the contact normal
 
   bool was_in_contact = false;
+
+  // The normal approach speed sampled on the substep the contact FIRST appeared, before any response.
+  // Restitution uses this rather than the current speed:
+  // with speculative contacts the sphere is braked as it approaches, so by the time it actually touches the instantaneous speed is no longer the speed it arrived with.
+  double impact_vn = 0.0;
 
   Vector3 prev_normal = Vector3( 0.0, 0.0, 1.0 ); // up by default (flat horizontal terrain)
 };
@@ -39,13 +45,15 @@ struct ContactPoint
   Vector3 normal;      // unit, out of the ground
   Vector3 t1, t2;      // the tangent basis
 
-  double penetration = 0.0;
+  double penetration = 0.0; // > 0 => overlapping; clamped at 0
+  double separation  = 0.0; // signed gap; > 0 => a speculative contact, not touching yet
   double vn0         = 0.0; // the normal approach speed at detection time
 
-  // Inverse effective masses along n, t1, t2.
+  // Inverse effective masses along n, t1, t2, and about n (torsional).
   double kn  = 0.0;
   double kt1 = 0.0;
   double kt2 = 0.0;
+  double k_spin = 0.0;
 };
 
 } // namespace phys

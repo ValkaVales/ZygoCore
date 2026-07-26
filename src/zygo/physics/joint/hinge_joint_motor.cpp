@@ -8,37 +8,63 @@
 namespace zygo {
 namespace phys {
 
+void HingeJoint::setMotorMode( MotorMode mode )
+{
+  if ( motor_mode != mode )
+  {
+    motor_mode = mode;
+    accumulated_motor_impulse = 0;
+  }
+}
+
 void HingeJoint::setMotorVelocity( double target_velocity_rad, double max_torque )
 {
-  motor_mode = MOTOR_VELOCITY;
+  requestWake();
+
+  setMotorMode( MOTOR_VELOCITY );
+
+  ZgAssert( std::isfinite( max_torque ) );
+  ZgAssert( max_torque > 0.0 );
 
   motor_target_velocity = target_velocity_rad;
   motor_max_torque      = max_torque;
 }
 
-void HingeJoint::setMotorPosition(
-  double target_angle_rad,
-  double max_torque,
-  double max_velocity_rad
-)
+void HingeJoint::setMotorPosition( double target_angle_rad, double max_torque, double max_velocity_rad )
 {
-  motor_mode = MOTOR_POSITION;
+  requestWake();
+
+  setMotorMode( MOTOR_POSITION );
+
+  ZgAssert( std::isfinite( max_torque ) );
+  ZgAssert( max_torque > 0.0 );
 
   motor_target_angle  = target_angle_rad;
   motor_max_torque    = max_torque;
   motor_max_velocity  = std::abs( max_velocity_rad );
 }
 
+// Idea of this mode:   (see solveMotorVelocityConstraint)
+// new_accumulated_impulse = target_torque * dt;
+// lambda = new_accumulated_impulse - accumulated_motor_impulse;
+// accumulated_motor_impulse = new_accumulated_impulse;
+// applyImpulse( lambda );
 void HingeJoint::setMotorTorque( double torque )
 {
-  motor_mode = MOTOR_TORQUE;
+  requestWake();
 
+  ZgAssert( std::isfinite( torque ) );
+  ZgAssert( torque > 0.0 );
+
+  setMotorMode( MOTOR_TORQUE );
   motor_target_torque = torque;
 }
 
 void HingeJoint::disableMotor()
 {
-  motor_mode = MOTOR_OFF;
+  requestWake();
+
+  setMotorMode( MOTOR_OFF );
 
   motor_target_velocity     = 0.0;
   motor_target_angle        = 0.0;

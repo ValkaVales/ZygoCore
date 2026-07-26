@@ -15,7 +15,7 @@ namespace phys {
 
 void RigidBody::integrateVelocities( double dt )
 {
-  if ( isStatic() )
+  if ( isStatic() || is_sleeping )
     return;
 
   center_of_mass_pos += speed * dt;
@@ -29,7 +29,7 @@ void RigidBody::integrateVelocities( double dt )
 #ifdef USE_EULER_BODY_INTEGRATION
 void RigidBody::integrateVelocities( double dt )
 {
-  if ( isStatic() )
+  if ( isStatic() || is_sleeping )
     return;
 
   center_of_mass_pos += speed * dt;
@@ -67,7 +67,7 @@ void RigidBody::integrateVelocities( double dt )
 // omega is re-derived from L and the rotating inertia tensor.
 void RigidBody::integrateVelocities( double dt )
 {
-  if ( isStatic() )
+  if ( isStatic() || is_sleeping )
     return;
 
   center_of_mass_pos += speed * dt;

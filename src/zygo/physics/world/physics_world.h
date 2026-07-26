@@ -80,7 +80,10 @@ private:
 
   bool solveContactPositionsOnce();
 
-  void detectContacts();
+  // speculative_dt > 0 enables the velocity-derived query margin (see ContactSettings::speculative_contacts).
+  // The position phase passes 0: by then the bodies have already been integrated and only real overlaps are of interest.
+  void detectContacts( double speculative_dt );
+
   void warmStartContacts();
 
   bool solveContactsCollisionOnce( double dt ); // returns true, if still has error

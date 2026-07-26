@@ -116,6 +116,35 @@ struct ContactSettings
 
   double margin = 1e-4; // 0.1 mm: a sphere this close already counts as a contact
 
+  // ---- speculative contacts ----
+  // A fixed 0.1 mm margin is far too small for a moving foot: landing at 2 m/s with a
+  // 2 ms substep it travels 4 mm per substep, so it is never seen approaching - only
+  // afterwards, already 4 mm inside the ground, and Baumgarte then shoves it back out.
+  //
+  // With this on, the query margin grows to whatever the sphere can actually cover in
+  // one substep, so the contact is found BEFORE the surface is crossed. Such a contact
+  // does not stop the foot in mid-air: it only forbids it from ending the substep below
+  // the surface, i.e. the allowed approach speed is exactly the one that closes the gap.
+  //
+  // The result is a foot that lands ON the ground instead of inside it.
+  bool speculative_contacts = true;
+
+  // Cap on the velocity-derived margin. Guards against a single explosive velocity
+  // turning every foot into a ground-wide contact query.
+  double speculative_margin_max = 0.05; // 50 mm
+
+  // ---- torsional (spin) friction ----
+  // A sphere touches a plane at one point, so the two tangential rows resist sliding but
+  // nothing resists rotation ABOUT the contact normal - a planted foot spins freely and
+  // the robot slowly yaws away with no external torque. A real foot has a finite contact
+  // patch; this is the standard single-row approximation of it:
+  //
+  //   |spin impulse| <= spin_friction_mu * sphere_radius * normal impulse
+  //
+  // Dimensionless, like friction_mu; the sphere radius supplies the lever arm.
+  // Set to 0 to disable.
+  double spin_friction_mu = 0.35;
+
   // ---- velocity solver ----
   double baumgarte_beta = 0.2;  // penetration share removed per substep
   double slop           = 1e-4; // allowed penetration, ~0.1 mm
@@ -142,6 +171,37 @@ struct ContactSettings
 };
 
 
+// ------------------------------------------------------------------ sleeping
+struct SleepSettings
+{
+  // OFF by default, and deliberately so.
+  //
+  // A sleeping assembly is skipped entirely - no gravity, no solve, no integration - so
+  // a standing robot stops costing anything. The catch is that nothing in the engine can
+  // guess when it should wake up again: the world only knows about gravity and terrain
+  // contacts, so an assembly that fell asleep will stay asleep until something tells it
+  // otherwise.
+  //
+  // Two things wake it:
+  //   - a motor command on any of its joints (setMotorPosition/Velocity/Torque,
+  //     disableMotor, enableAngleLimit) - handled automatically;
+  //   - ArticulatedBody::wakeUp(), which you must call yourself after applying an
+  //     impulse, teleporting a body, or changing the terrain under it.
+  //
+  // If a controller drives the assembly through anything other than the joint motors,
+  // leave this off.
+  bool enabled = false;
+
+  // An assembly is a sleep candidate while EVERY one of its bodies stays under both
+  // thresholds. One body above either of them resets the timer for the whole assembly.
+  double linear_velocity_threshold  = 0.01; // m/s
+  double angular_velocity_threshold = 0.05; // rad/s
+
+  // How long it has to stay that quiet before it actually falls asleep.
+  double time_to_sleep = 0.5; // s
+};
+
+
 // ------------------------------------------------------------------ the aggregate
 struct SolverSettings
 {
@@ -151,6 +211,7 @@ struct SolverSettings
   MotorSettings   motor;
   LimitSettings   limits;
   ContactSettings contacts;
+  SleepSettings   sleep;
 };
 
 } // namespace phys

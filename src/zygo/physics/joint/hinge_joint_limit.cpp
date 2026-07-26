@@ -10,6 +10,8 @@ namespace phys {
 
 void HingeJoint::enableAngleLimit( JointLimits limits )
 {
+  requestWake();
+
   this->limits = limits;
   limit_enabled = true;
 }
