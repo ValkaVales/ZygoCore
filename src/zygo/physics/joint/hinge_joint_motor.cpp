@@ -66,7 +66,8 @@ void HingeJoint::prepareVelocitySolve( double dt )
   cached_axis_A      = worldAxisA();
   cached_hinge_angle = currentHingeAngle();
 
-  ZgAssertRelease( cached_axis_A.isNormalized() );
+  //ZgAssertRelease( cached_axis_A.isNormalized() ); // this works, but is commented just for performance
+  ZgAssert( cached_axis_A.isNormalized() );
 
   prepareAnchorConstraint( dt );
   prepareAxisConstraint  ( dt );

@@ -9,7 +9,10 @@
 
 namespace zygo {
 
-// class for my physics solver
+#define USE_RELATIVE_EPS_IN_MAT3_SOLVE_AND_INVERSE // comment this for max performance (but worse checks)
+
+
+// class for the physics solver
 
 struct Mat3 final
 {
@@ -442,19 +445,19 @@ struct Mat3 final
   //   - far too loose for a large one
   //     (diag(1e9, 1e9, 1e-9) is hopeless, yet its determinant is 1e9).
   //
-  // So `rel_eps` means "how far above the double round-off we insist on being", not "how big the determinant must be".
+  // So `relative_eps` means "how far above the double round-off we insist on being", not "how big the determinant must be".
 
   // The threshold a determinant of a matrix of THIS magnitude has to beat.
-  Real determinantEpsilon( Real rel_eps = EPSILON ) const noexcept
+  Real determinantEpsilon( Real relative_eps = EPSILON ) const noexcept
   {
     const Real s = maxAbsElement();
-    return rel_eps * s * s * s;
+    return relative_eps * s * s * s;
   }
 
   // The threshold a first-order quantity (a pivot, a diagonal element) has to beat.
-  Real pivotEpsilon( Real rel_eps = EPSILON ) const noexcept
+  Real pivotEpsilon( Real relative_eps = EPSILON ) const noexcept
   {
-    return rel_eps * maxAbsElement();
+    return relative_eps * maxAbsElement();
   }
 
   // ------------------------------------------------------------
@@ -498,8 +501,8 @@ struct Mat3 final
       m[2] * (m[3] * m[7] - m[4] * m[6]);
   }
 
-  // rel_eps is RELATIVE - see "Scale-relative tolerances" above.
-  bool tryInverse( Mat3& out, Real rel_eps = EPSILON ) const noexcept
+  // relative_eps is RELATIVE - see "Scale-relative tolerances" above.
+  bool tryInverse( Mat3& out, Real relative_eps = EPSILON ) const noexcept
   {
     const Real c00 = m[4] * m[8] - m[5] * m[7];
     const Real c01 = m[2] * m[7] - m[1] * m[8];
@@ -508,8 +511,11 @@ struct Mat3 final
     const Real det = m[0] * c00 + m[3] * c01 + m[6] * c02;
 
     // Written as !( > ) so that a NaN determinant is rejected too.
-    //if ( !( std::fabs( det ) > determinantEpsilon( rel_eps ) ) )
-    if ( !( std::fabs( det ) > rel_eps ) )
+#ifdef USE_RELATIVE_EPS_IN_MAT3_SOLVE_AND_INVERSE
+    if ( !( std::fabs( det ) > determinantEpsilon( relative_eps ) ) )
+#else
+    if ( !( std::fabs( det ) > relative_eps ) )
+#endif
       return false;
 
     const Real inv_det = REAL_ONE / det;
@@ -546,8 +552,8 @@ struct Mat3 final
   // Solves: this * x = b
   // This is better than: x = this->inversed() * b
   //
-  // rel_eps is RELATIVE - see "Scale-relative tolerances" above.
-  bool trySolve( Vector3 const& b, Vector3& x, Real rel_eps = EPSILON ) const noexcept
+  // relative_eps is RELATIVE - see "Scale-relative tolerances" above.
+  bool trySolve( Vector3 const& b, Vector3& x, Real relative_eps = EPSILON ) const noexcept
   {
     const Real c00 = m[4] * m[8] - m[5] * m[7];
     const Real c01 = m[2] * m[7] - m[1] * m[8];
@@ -556,8 +562,11 @@ struct Mat3 final
     const Real det = m[0] * c00 + m[3] * c01 + m[6] * c02;
 
     // Written as !( > ) so that a NaN determinant is rejected too.
-    //if ( !( std::fabs( det ) > determinantEpsilon( rel_eps ) ) )
-    if ( !( std::fabs( det ) > rel_eps ) )
+#ifdef USE_RELATIVE_EPS_IN_MAT3_SOLVE_AND_INVERSE
+    if ( !( std::fabs( det ) > determinantEpsilon( relative_eps ) ) )
+#else
+    if ( !( std::fabs( det ) > relative_eps ) )
+#endif
       return false;
 
     const Real inv_det = REAL_ONE / det;
@@ -596,9 +605,9 @@ struct Mat3 final
   // [ m10 m11  *  ]
   // [ m20 m21 m22 ]
   //
-  bool trySolveSPD( Vector3 const& b, Vector3& x, Real rel_eps = EPSILON ) const noexcept
+  bool trySolveSPD( Vector3 const& b, Vector3& x, Real relative_eps = EPSILON ) const noexcept
   {
-    ZgAssert( isSymmetric( rel_eps * 10 ) );
+    ZgAssert( isSymmetric( relative_eps * 10 ) );
 
     const Real a00 = m[0];
     const Real a10 = m[3];
@@ -608,7 +617,11 @@ struct Mat3 final
     const Real a22 = m[8];
 
     // The pivots are first-order in the matrix magnitude, so they are compared against pivotEpsilon(), not against a fixed number.
-    const Real pivot_eps = rel_eps;// pivotEpsilon( rel_eps );
+#ifdef USE_RELATIVE_EPS_IN_MAT3_SOLVE_AND_INVERSE
+    const Real pivot_eps = pivotEpsilon( relative_eps );
+#else
+    const Real pivot_eps = relative_eps;
+#endif
 
     if ( !( a00 > pivot_eps ) )
       return false;
@@ -672,12 +685,16 @@ struct Mat3 final
   // [ m10 m11  *  ]
   // [ m20 m21 m22 ]
   //
-  bool trySolveLDLT( Vector3 const& b, Vector3& x, Real rel_eps = EPSILON ) const noexcept
+  bool trySolveLDLT( Vector3 const& b, Vector3& x, Real relative_eps = EPSILON ) const noexcept
   {
-    ZgAssert( isSymmetric( rel_eps * 10 ) );
+    ZgAssert( isSymmetric( relative_eps * 10 ) );
 
     // The pivots are first-order in the matrix magnitude - see "Scale-relative tolerances".
-    const Real pivot_eps = rel_eps;// pivotEpsilon( rel_eps );
+#ifdef USE_RELATIVE_EPS_IN_MAT3_SOLVE_AND_INVERSE
+    const Real pivot_eps = pivotEpsilon( relative_eps );
+#else
+    const Real pivot_eps = relative_eps;
+#endif
 
     // ---- factorization ----
     const Real d0 = m[0];
@@ -735,11 +752,11 @@ struct Mat3 final
     return maxAbsElement() <= eps;
   }
 
-  // rel_eps is RELATIVE: a rotated inertia tensor is symmetric analytically but only to within a few ulps of ITS OWN elements,
+  // relative_eps is RELATIVE: a rotated inertia tensor is symmetric analytically but only to within a few ulps of ITS OWN elements,
   // so an absolute eps either rejects every large tensor or accepts every small non-symmetric one.
-  bool isSymmetric( Real rel_eps = EPSILON ) const noexcept
+  bool isSymmetric( Real relative_eps = EPSILON ) const noexcept
   {
-    const Real eps = pivotEpsilon( rel_eps );
+    const Real eps = pivotEpsilon( relative_eps );
 
     return
       eq( m[1], m[3], eps ) &&
@@ -750,21 +767,21 @@ struct Mat3 final
   // SPD = Symmetric Positive Definite.
   // Sylvester's criterion: all corner minors > 0.
   // Works ONLY in conjunction with the symmetry check - for asymmetric matrices, the criterion is unacceptable.
-  bool isSPD( Real rel_eps = EPSILON ) const noexcept
+  bool isSPD( Real relative_eps = EPSILON ) const noexcept
   {
-    if ( !isSymmetric( rel_eps ) )
+    if ( !isSymmetric( relative_eps ) )
       return false;
 
-    Real const s = maxAbsElement(); // this is called twice in isSPD. TODO: fix it.
+    Real const s = maxAbsElement(); // maxAbsElement() is called twice in isSPD: once here, once - in isSymmetric(). maybeTODO: fix it.
 
     Real const minor1 = m[0];
     Real const minor2 = m[0] * m[4] - m[1] * m[3];
     Real const minor3 = determinant();
 
     // Each leading minor is compared against its OWN power of the matrix magnitude.
-    return minor1 > rel_eps * s
-        && minor2 > rel_eps * s * s
-        && minor3 > rel_eps * s * s * s;
+    return minor1 > relative_eps * s
+        && minor2 > relative_eps * s * s
+        && minor3 > relative_eps * s * s * s;
   }
 
   Real maxAbsElement() const noexcept
