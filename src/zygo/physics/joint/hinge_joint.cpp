@@ -160,26 +160,37 @@ bool HingeJoint::solveAnchorVelocity( double dt ) // returns true, if still has 
     settings->joints.softness
   );
 
-  // K is symmetric positive definite - solve with the fast Cholesky path.
+  // K is symmetric positive definite.
+  // trySolveLDLT() is the faster and more accurate path here (sqrt-free Cholesky, and it verifies positive definiteness instead of silently returning garbage).
+  // Flip the two lines to A/B it.
+  // trySolveSPD() is the old sqrt-based Cholesky: measurably slower.
   Vector3 J;
-  //if ( !K.trySolveSPD( rhs, J ) )
+  //if ( !K.trySolveLDLT( rhs, J ) )
   if ( !K.trySolve( rhs, J ) )
     return false; // degenerate effective mass (e.g. both bodies static) - nothing to solve
 
   double J_len = J.limitLength( settings->joints.max_impulse );
 
 #ifdef DEBUG_CONSERVATION_CHECKS
-  Vector3 L_before = calcTotalL();
+  // Angular momentum is only conserved between two DYNAMIC bodies:
+  // a static one silently absorbs whatever is applied to it, which is the whole point of it.
+  bool const check_L = !objA->isStatic() && !objB->isStatic();
+
+  Vector3 L_before;
+  if ( check_L )
+    L_before = calcTotalL();
 #endif
 
   objA->applyImpulseAtWorldPoint(  J, pA );
   objB->applyImpulseAtWorldPoint( -J, pB );
 
 #ifdef DEBUG_CONSERVATION_CHECKS
-  Vector3 L_after = calcTotalL();
-
-  Vector3 dL = L_after - L_before;
-  ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
+  if ( check_L )
+  {
+    Vector3 L_after = calcTotalL();
+    Vector3 dL = L_after - L_before;
+    ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
+  }
 #endif
 
   return J_len > settings->joints.min_error_for_j;
@@ -270,17 +281,24 @@ bool HingeJoint::solveAxisVelocity( double dt ) // returns true, if still has er
   double angular_impulse_len = angular_impulse.limitLength( settings->joints.max_impulse );
 
 #ifdef DEBUG_CONSERVATION_CHECKS
-  Vector3 L_before = calcTotalL();
+  // See solveAnchorVelocity(): only meaningful when both bodies are dynamic.
+  bool const check_L = !objA->isStatic() && !objB->isStatic();
+
+  Vector3 L_before;
+  if ( check_L )
+    L_before = calcTotalL();
 #endif
 
   objA->applyAngularImpulse(  angular_impulse );
   objB->applyAngularImpulse( -angular_impulse );
 
 #ifdef DEBUG_CONSERVATION_CHECKS
-  Vector3 L_after = calcTotalL();
-
-  Vector3 dL = L_after - L_before;
-  ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
+  if ( check_L )
+  {
+    Vector3 L_after = calcTotalL();
+    Vector3 dL = L_after - L_before;
+    ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
+  }
 #endif
 
   return angular_impulse_len > settings->joints.min_error_for_angular_impulse;
@@ -329,9 +347,9 @@ bool HingeJoint::solveAnchorPosition()
   );
 
   // We need to reduce the error, hence RHS = -correction.
-  // K is symmetric positive definite - solve with the fast Cholesky path.
+  // K is symmetric positive definite - see the note in solveAnchorVelocity().
   Vector3 impulse;
-  //if ( !K.trySolveSPD( -correction, impulse ) )
+  //if ( !K.trySolveLDLT( -correction, impulse ) )
   if ( !K.trySolve( -correction, impulse ) )
     return false; // degenerate effective mass - nothing to correct
 

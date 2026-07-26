@@ -309,7 +309,7 @@ bool PhysicsWorld::solveContactsCollisionOnce( double dt )
       double impulse_delta = new_accumulated_normal_impulse - old_accumulated_normal_impulse;
       cs.accumulated_normal_impulse = new_accumulated_normal_impulse;
 
-      double impulse_len = std::abs( impulse_delta );
+      Real impulse_len = std::abs( impulse_delta );
 
       if ( !isZero( impulse_len, PHYS_EPSILON ) )
         b.applyImpulseAtWorldPoint( c.normal * impulse_delta, c.point );

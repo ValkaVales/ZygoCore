@@ -11,6 +11,7 @@ namespace phys {
 
 RigidBody::RigidBody( uint color )
   : initialized ( false )
+  , is_static   ( false )
 
   , total_mass  ( 0.0 )
   , inv_mass    ( 0.0 )
@@ -40,6 +41,24 @@ void RigidBody::clearGeometry()
   angular_speed     .reset();
 
   rotation_quaternion = Quaternion();
+}
+
+void RigidBody::makeStatic()
+{
+  // The mass and the local center of mass must already be known:
+  // the shapes have been shifted so that (0,0,0) is the center of mass, and center_of_mass_pos holds the world position the body was built at.
+  // makeStatic() freezes exactly that pose.
+  ZgAssertRelease( initialized );
+
+  is_static = true;
+
+  inv_mass = 0.0;
+
+  inertia_tensor_local_inv = Mat3::zero();
+  inertia_tensor_world_inv = Mat3::zero();
+
+  speed        .reset();
+  angular_speed.reset();
 }
 
 void RigidBody::normalizeQuaternion()
@@ -208,7 +227,7 @@ void RigidBody::calcMassAndLocalCenterOfMass()
   center_of_mass_pos /= mass_sum;
 
   inv_mass = 1.0 / total_mass;
-  if ( inv_mass < SMALL_EPSILON )
+  if ( inv_mass <= SMALL_EPSILON )
     inv_mass = 0.0; // the mass is so huge that the body is effectively static
 }
 
@@ -264,8 +283,8 @@ void RigidBody::rebuildPhysicalParameters_afterAllShapesAdded() // should be cal
 
   inertia_tensor_local_inv = inertia_tensor_local.inversed();
 
-  validateInertiaTensor( inertia_tensor_local );
-  validateInertiaTensor( inertia_tensor_local_inv );
+  validateInertiaTensor       ( inertia_tensor_local );
+  validateInverseInertiaTensor( inertia_tensor_local_inv );
 
   // 4. The world tensor.
   updateWorldInertia();

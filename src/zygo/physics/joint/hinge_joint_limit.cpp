@@ -165,7 +165,9 @@ bool HingeJoint::solveAngleLimitVelocity( double dt )
   objA->applyAngularImpulse( impulseA );
   objB->applyAngularImpulse( impulseB );
 
-  return lambda > settings->limits.min_error_for_impulse;
+  // lambda is the SIGNED delta of the accumulated impulse: it is negative whenever the solver is releasing a limit it over-pushed on the previous iteration.
+  // That is just as much "still has error" as pushing, so the magnitude is what matters here.
+  return std::abs( lambda ) > settings->limits.min_error_for_impulse;
 }
 
 } // namespace phys

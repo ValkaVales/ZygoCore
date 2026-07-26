@@ -45,9 +45,17 @@ Quaternion buildQuaternionFromMat3( Mat3 const & mat );
 // Parallel-axis (Steiner) term for translating an inertia tensor by d.
 Mat3 calcParallelAxisTerm( double mass, Vector3 const & d );
 
-// Asserts that mat is a valid 3x3 inertia tensor: finite, symmetric, SPD.
-// det_eps should NOT be very small.
-void validateInertiaTensor( Mat3 const & mat, double symmetry_eps = SMALL_EPSILON, double det_eps = 1e-14, double det_eps_small = 1e-18 );
+// Relative tolerance of the inertia-tensor validators.
+//
+// RELATIVE, never absolute: the determinant of a 3x3 scales as (element magnitude)^3, so a 5 g foot pad and a 3 t frame are ~18 decades apart in determinant while being equally well conditioned.
+// A fixed threshold cannot serve both.
+const double INERTIA_VALIDATION_REL_EPS = 1e-11;
+
+// Asserts that mat is a valid 3x3 inertia tensor: finite, symmetric, positive definite, and satisfying the triangle inequality Ixx + Iyy >= Izz (true in any orthonormal frame).
+void validateInertiaTensor( Mat3 const & mat, double rel_eps = INERTIA_VALIDATION_REL_EPS );
+
+// The same for an INVERSE inertia tensor: everything except the triangle inequality, which does not survive inversion.
+void validateInverseInertiaTensor( Mat3 const & mat, double rel_eps = INERTIA_VALIDATION_REL_EPS );
 
 } // namespace phys
 } // namespace zygo

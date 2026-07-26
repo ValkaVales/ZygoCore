@@ -6,6 +6,11 @@
 
 namespace zygo {
 
+bool checkAngle180( Real angle, Real e )
+{
+  return ge( angle, -PI ) && le( angle, PI );
+}
+
 Real normalizeAnglePi( Real angle )
 {
   angle = std::fmod( angle + PI, PI_MUL_2 );

@@ -15,6 +15,9 @@ namespace phys {
 
 void RigidBody::integrateVelocities( double dt )
 {
+  if ( isStatic() )
+    return;
+
   center_of_mass_pos += speed * dt;
 
   Quaternion dq = Quaternion::calcRotationQuaternion_fromAngularVelocity( angular_speed, dt );
@@ -26,6 +29,9 @@ void RigidBody::integrateVelocities( double dt )
 #ifdef USE_EULER_BODY_INTEGRATION
 void RigidBody::integrateVelocities( double dt )
 {
+  if ( isStatic() )
+    return;
+
   center_of_mass_pos += speed * dt;
 
   // 1. The current omega in the local frame of the body.
@@ -61,6 +67,9 @@ void RigidBody::integrateVelocities( double dt )
 // omega is re-derived from L and the rotating inertia tensor.
 void RigidBody::integrateVelocities( double dt )
 {
+  if ( isStatic() )
+    return;
+
   center_of_mass_pos += speed * dt;
 
   Vector3 L_spin = inertia_tensor_world * angular_speed;

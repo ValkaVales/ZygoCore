@@ -9,14 +9,19 @@
 namespace zygo {
 
 // Unit conversion for the construction API (grams/millimeters -> SI).
-const double GRAMS_IN_KG          = 1000.0;
-const double MILLIMETERS_IN_METER = 1000.0;
+const Real GRAMS_IN_KG          = Real(1000.0);
+const Real MILLIMETERS_IN_METER = Real(1000.0);
 
 namespace phys {
 
 // Float-precision guards (NOT tuning - do not change these).
+#ifdef FLOAT_MNUMBER
+const float PHYS_EPSILON     = 1e-10f;
+const float PHYS_EPSILON_SQR = sqr( PHYS_EPSILON );
+#else
 const double PHYS_EPSILON     = 1e-15;
 const double PHYS_EPSILON_SQR = sqr( PHYS_EPSILON );
+#endif
 
 } // namespace phys
 } // namespace zygo

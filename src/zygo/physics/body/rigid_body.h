@@ -19,6 +19,7 @@ class RigidBody
 
 private:
   bool initialized;
+  bool is_static;
 
   Vector3 center_of_mass_pos;
   Quaternion rotation_quaternion;
@@ -51,7 +52,18 @@ public:
   void normalizeQuaternion();
   void updateWorldInertia();
 
-  inline bool isStatic() const { return inv_mass == 0.0; }
+  // ------------------------------------------------------------------ static bodies
+  // Turns the body into immovable world geometry: infinite mass AND infinite inertia, zero velocity, no response to impulses or to gravity.
+  // The shapes keep defining the geometry and the center of mass - only the dynamic response is removed.
+  //
+  // Call AFTER rebuildPhysicalParameters_afterAllShapesAdded()
+  // (ArticulatedBody::rebuildPhysicalParameters_afterAllBodiesCreating() does that for every body of an assembly) and BEFORE the first step.
+  //
+  // Note that the joint solver reads inertia_tensor_world_inv directly and does not go through isStatic(), which is exactly why this zeroes the inverse tensors as well:
+  // a "static" body with a finite inverse inertia would still be spun by every joint.
+  void makeStatic();
+
+  inline bool isStatic() const { return is_static || inv_mass == 0.0; }
 
   // Gravity/external forces: adds an acceleration to the linear speed.
   void applyGravity( Vector3 const & gravity, double dt );

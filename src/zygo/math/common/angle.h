@@ -6,11 +6,15 @@
 
 namespace zygo {
 
+/*
 template <typename T>
 inline bool checkAngle180( T angle, T e = EPSILON )
 {
-  return ge( angle, -PI ) && le( angle, PI );
+  return ge( angle, T(-PI) ) && le( angle, T(PI) );
 }
+*/
+
+bool checkAngle180( Real angle, Real e = EPSILON );
 
 Real normalizeAnglePi( Real angle_rad );
 Real angleDelta( Real from, Real to );
