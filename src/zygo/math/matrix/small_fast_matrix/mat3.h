@@ -131,7 +131,7 @@ struct Mat3 final
     );
   }
 
-  // Удобно для world inertia:
+  // Convenient for world inertia:
   //
   // Iworld = mat * diag(Ibody) * mat^T
   //

@@ -8,8 +8,16 @@ namespace zygo {
 class Vector2Short
 {
 public:
-  i16 x;
-  i16 y;
+  union
+  {
+    i16 x;
+    i16 width;
+  };
+  union
+  {
+    i16 y;
+    i16 height;
+  };
 
 public:
   Vector2Short();
