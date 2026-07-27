@@ -38,6 +38,11 @@ void PhysicsWorld::addContactSphere( RigidBody & body, Vector3 center_world_mm, 
   Vector3 center_world = center_world_mm / MILLIMETERS_IN_METER;
   double  radius       = radius_mm       / MILLIMETERS_IN_METER;
 
+  // detectContacts() clears and refills `contacts` up to position_iterations + 1 times per substep.
+  // clear() keeps the capacity, so one reserve at registration time removes every reallocation from the hot path for good.
+  contact_spheres.reserve( contact_spheres.size() + 1 );
+  contacts       .reserve( contact_spheres.size() + 1 );
+
   ContactSphere cs;
   cs.body         = &body;
   cs.local_center = body.worldPointToLocal( center_world );
@@ -124,19 +129,35 @@ void PhysicsWorld::subStep( double dt )
 
 #ifdef USE_VELOCITY_SOLVER
   // 4) The shared velocity solve: joints and contacts in one Gauss-Seidel loop.
-  for ( int i = 0; i < settings.step.velocity_iterations; ++i )
+  int const min_iterations = max2( 1, settings.step.min_velocity_iterations );
+
+  for ( int i = 0; i < settings.step.max_velocity_iterations; ++i )
   {
     velocity_solver_statistics.iterations_count = i + 1;
 
+    bool has_error = false;
+
     for ( auto * co : objects )
-      if ( !co->isSleeping() )
-        co->solveVelocitiesOnce( dt );
+    {
+      if ( co->isSleeping() )
+        continue;
 
-    solveContactsCollisionOnce( dt );
-    solveContactsFrictionOnce();
+      if ( co->solveVelocitiesOnce( dt ) )
+        has_error = true;
+    }
 
-    // No early-out here: the joint and contact passes disturb each other,
-    // so the loop always runs the full velocity_iterations count.
+    // Both contact passes must run before the test: the collision pass sets the normal impulse that the friction cone is scaled by,
+    // so friction cannot be judged converged until the collision pass has stopped moving.
+    if ( solveContactsCollisionOnce( dt ) )
+      has_error = true;
+
+    if ( solveContactsFrictionOnce() )
+      has_error = true;
+
+    // Early-out: nobody moved anything measurable, so another iteration would change nothing.
+    // Every constraint reports the size of the DELTA it just applied, never its accumulated total, so a joint holding a large steady load correctly reports settled.
+    if ( settings.step.velocity_early_out && !has_error && (i + 1) >= min_iterations )
+      break;
   }
 
   velocity_solver_statistics.update();
@@ -457,7 +478,7 @@ bool PhysicsWorld::solveContactsFrictionOnce()
         cs.accumulated_tangent_impulse = wanted_impulse;
 
         Vector3 const delta = wanted_impulse - old_impulse;
-        double delta_len = delta.length();
+        Real delta_len = delta.length();
 
         if ( !isZero( delta_len, PHYS_EPSILON ) )
           b.applyImpulseAtWorldPoint( delta, c.point );
@@ -515,16 +536,92 @@ bool PhysicsWorld::solveContactsFrictionOnce()
       cs.accumulated_spin_impulse = new_spin;
 
       double spin_delta = new_spin - old_spin;
+      Real spin_delta_abs = (Real)std::abs( spin_delta );
 
-      if ( !isZero( std::abs( spin_delta ), PHYS_EPSILON ) )
+      if ( !isZero( spin_delta_abs, PHYS_EPSILON ) )
         b.applyAngularImpulse( c.normal * spin_delta );
 
-      if ( std::abs(spin_delta) > settings.contacts.min_error_for_friction_impulse )
+      if ( spin_delta_abs > settings.contacts.min_error_for_friction_impulse )
         has_error = true;
     }
   }
 
   return has_error;
+}
+
+// ------------------------------------------------------------------------ state snapshot
+void PhysicsWorld::saveState( WorldState & out ) const
+{
+  out.clear();
+
+  for ( auto const * co : objects )
+    co->saveState( out );
+
+  for ( auto const & cs : contact_spheres )
+  {
+    ContactSphereState st;
+    st.accumulated_normal_impulse  = cs.accumulated_normal_impulse;
+    st.accumulated_spin_impulse    = cs.accumulated_spin_impulse;
+    st.accumulated_tangent_impulse = cs.accumulated_tangent_impulse;
+    st.was_in_contact              = cs.was_in_contact;
+    st.impact_vn                   = cs.impact_vn;
+    st.prev_normal                 = cs.prev_normal;
+    out.contact_spheres.push_back( st );
+  }
+
+  out.valid = true;
+}
+
+bool PhysicsWorld::restoreState( WorldState const & in )
+{
+  if ( !in.valid )
+    return false;
+
+  // Structural match is checked BEFORE anything is written, so a mismatched snapshot leaves the world untouched rather than half-restored.
+  if ( in.assemblies     .size() != objects        .size() ) return false;
+  if ( in.contact_spheres.size() != contact_spheres.size() ) return false;
+
+  size_t total_bodies = 0;
+  size_t total_joints = 0;
+
+  for ( auto const * co : objects )
+  {
+    total_bodies += co->bodiesCount();
+    total_joints += co->jointsCount();
+  }
+
+  if ( in.bodies.size() != total_bodies ) return false;
+  if ( in.joints.size() != total_joints ) return false;
+
+  size_t body_index  = 0;
+  size_t joint_index = 0;
+
+  for ( size_t i = 0; i < objects.size(); ++i )
+  {
+    if ( !objects[i]->restoreState( in, body_index, joint_index ) )
+      return false;
+
+    objects[i]->restoreSleepState( in.assemblies[i] );
+  }
+
+  for ( size_t i = 0; i < contact_spheres.size(); ++i )
+  {
+    ContactSphere & cs = contact_spheres[i];
+    ContactSphereState const & st = in.contact_spheres[i];
+
+    cs.accumulated_normal_impulse  = st.accumulated_normal_impulse;
+    cs.accumulated_spin_impulse    = st.accumulated_spin_impulse;
+    cs.accumulated_tangent_impulse = st.accumulated_tangent_impulse;
+    cs.was_in_contact              = st.was_in_contact;
+    cs.impact_vn                   = st.impact_vn;
+    cs.prev_normal                 = st.prev_normal;
+  }
+
+  // The active contact list belongs to the substep that built it. detectContacts() refills it at the start of the next one,
+  // so leaving a stale list behind would only mislead activeContactsCount() in the meantime.
+  contacts.clear();
+
+  return true;
 }
 
 } // namespace phys

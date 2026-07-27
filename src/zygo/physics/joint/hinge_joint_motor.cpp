@@ -24,7 +24,11 @@ void HingeJoint::setMotorVelocity( double target_velocity_rad, double max_torque
   setMotorMode( MOTOR_VELOCITY );
 
   ZgAssert( std::isfinite( max_torque ) );
-  ZgAssert( max_torque > 0.0 );
+
+  // >= 0, not > 0: zero is a legitimate command meaning "the actuator has no torque left".
+  // A speed-dependent torque curve of the usual form tau = tau_stall * (1 - w / w_max)
+  // reaches exactly zero at top speed and goes negative on overshoot, so a controller feeding it straight through would trip a strict assert during a fast swing.
+  ZgAssert( max_torque >= 0.0 );
 
   motor_target_velocity = target_velocity_rad;
   motor_max_torque      = max_torque;
@@ -37,7 +41,7 @@ void HingeJoint::setMotorPosition( double target_angle_rad, double max_torque, d
   setMotorMode( MOTOR_POSITION );
 
   ZgAssert( std::isfinite( max_torque ) );
-  ZgAssert( max_torque > 0.0 );
+  ZgAssert( max_torque >= 0.0 ); // see setMotorVelocity()
 
   motor_target_angle  = target_angle_rad;
   motor_max_torque    = max_torque;
@@ -45,7 +49,7 @@ void HingeJoint::setMotorPosition( double target_angle_rad, double max_torque, d
 }
 
 // Open-loop torque is applied once per substep by applyExternalActuatorImpulse().
-// Keeping it outside the iterative solver makes the injected angular impulse exactly torque*dt, independent of velocity_iterations.
+// Keeping it outside the iterative solver makes the injected angular impulse exactly torque*dt, independent of max_velocity_iterations.
 void HingeJoint::setMotorTorque( double torque )
 {
   requestWake();
@@ -75,8 +79,10 @@ void HingeJoint::applyExternalActuatorImpulse( double dt )
   if ( motor_mode != MOTOR_TORQUE )
     return;
 
-  ZgAssertRelease( cache_valid );
-  ZgAssertRelease( std::isfinite( dt ) && dt > 0.0 );
+  // Debug-level, not Release: the only way cache_valid is false here is a joint with a null body, which finishInitializing() already rules out.
+  // A hard crash in a shipped build is the wrong trade for that.
+  ZgAssert( cache_valid );
+  ZgAssert( std::isfinite( dt ) && dt > 0.0 );
 
   // Positive torque increases currentHingeAngle(): objB receives +axis*J and objA receives the equal-and-opposite reaction.
   Vector3 const angular_impulse = cached_axis_A * (motor_target_torque * dt);
@@ -95,6 +101,7 @@ void HingeJoint::prepareVelocitySolve( double dt )
   accumulated_upper_limit_impulse = 0.0;
 
   cache_valid = false;
+  last_substep_dt = dt;
 
   if ( objA == nullptr || objB == nullptr || settings == nullptr )
     return;
@@ -172,11 +179,15 @@ bool HingeJoint::solveMotorVelocityConstraint( double dt )
   objA->applyAngularImpulse( -angular_impulse );
   objB->applyAngularImpulse(  angular_impulse );
 
-  // The motor is torque-limited: when saturated, some velocity error always remains,
-  // and reporting it would keep the solver iterating at the cap forever.
-  // So the motor never reports an error and lets the other constraints decide
-  // when the solve has settled.
-  return false;
+  // Report an error only while the motor is still CHANGING its impulse.
+  //
+  // It used to always return false, on the grounds that a torque-saturated motor never reaches its target and would hold the loop open forever.
+  // That is true of the raw velocity error - but not of the DELTA measured here: once the accumulator is pinned at +/- max_impulse the clamp above makes lambda exactly zero,
+  // so a saturated motor reports settled all by itself.
+  //
+  // The difference matters as soon as the loop can exit early: an unsaturated motor that has not yet reached its target now keeps the solver iterating,
+  // instead of being silently abandoned the moment the anchor and axis rows happen to look converged.
+  return std::abs( lambda ) > settings->motor.min_error_for_impulse;
 }
 
 double HingeJoint::hingeAngularMassInv() const

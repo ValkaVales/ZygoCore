@@ -284,6 +284,7 @@
     <ClInclude Include="src\zygo\physics\terrain\terrain.h" />
     <ClInclude Include="src\zygo\physics\world\contact_point.h" />
     <ClInclude Include="src\zygo\physics\world\physics_world.h" />
+    <ClInclude Include="src\zygo\physics\world\world_state.h" />
     <ClInclude Include="src\zygo\random\random.h" />
     <ClInclude Include="src\zygo\random\weighted_choice.h" />
   </ItemGroup>

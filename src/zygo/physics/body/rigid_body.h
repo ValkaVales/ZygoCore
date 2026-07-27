@@ -4,6 +4,7 @@
 // The construction API takes grams/millimeters; everything else is SI (see physics.h).
 
 #include <zygo/physics/shape/shape.h>
+#include <zygo/physics/world/world_state.h>
 #include <zygo/math/matrix/small_fast_matrix/mat3.h>
 #include <zygo/math/quaternion/quaternion.h>
 #include <memory>
@@ -52,6 +53,11 @@ public:
 
   void normalizeQuaternion();
   void updateWorldInertia();
+
+  // ------------------------------------------------------------------ state snapshot
+  // Dynamic state only - see world_state.h. restoreState() refreshes the world inertia, so the body is immediately consistent with the orientation it was given.
+  void saveState   ( RigidBodyState & out ) const;
+  void restoreState( RigidBodyState const & in );
 
   // ------------------------------------------------------------------ static bodies
   // Turns the body into immovable world geometry: infinite mass AND infinite inertia, zero velocity, no response to impulses or to gravity.

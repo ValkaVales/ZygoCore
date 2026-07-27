@@ -294,5 +294,58 @@ void ArticulatedBody::calcMainPhysicalParameters( Vector3 const & total_center_o
   }
 }
 
+// ------------------------------------------------------------------------ state snapshot
+void ArticulatedBody::saveState( WorldState & out ) const
+{
+  ZgAssert( initialized );
+
+  ArticulatedBodyState st;
+  st.is_sleeping = is_sleeping;
+  st.idle_time   = idle_time;
+  out.assemblies.push_back( st );
+
+  for ( auto const & obj : objects )
+  {
+    RigidBodyState bs;
+    obj->saveState( bs );
+    out.bodies.push_back( bs );
+  }
+
+  for ( auto const & joint : joints )
+  {
+    HingeJointState js;
+    joint->saveState( js );
+    out.joints.push_back( js );
+  }
+}
+
+bool ArticulatedBody::restoreState( WorldState const & in, size_t & body_index, size_t & joint_index )
+{
+  ZgAssert( initialized );
+
+  if ( body_index  + objects.size() > in.bodies.size() ) return false;
+  if ( joint_index + joints .size() > in.joints.size() ) return false;
+
+  for ( auto & obj : objects )
+    obj->restoreState( in.bodies[ body_index++ ] );
+
+  for ( auto & joint : joints )
+    joint->restoreState( in.joints[ joint_index++ ] );
+
+  // The assembly-level flags are written by PhysicsWorld::restoreState(), which knows this assembly's index; everything below is derived and is rebuilt from the bodies.
+  updateTotalCenterOfMass();
+
+  return true;
+}
+
+void ArticulatedBody::restoreSleepState( ArticulatedBodyState const & st )
+{
+  is_sleeping = st.is_sleeping;
+  idle_time   = st.idle_time;
+
+  for ( auto & obj : objects )
+    obj->setSleeping( is_sleeping );
+}
+
 } // namespace phys
 } // namespace zygo

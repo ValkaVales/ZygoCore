@@ -26,6 +26,31 @@ Vector3 HingeJoint::calcTotalL() const
 
   return LA_orb + LB_orb + L_spin;
 }
+
+// Asserts that an impulse pair conserved the angular momentum of the two bodies.
+//
+// The tolerance is RELATIVE, never absolute.
+// An impulse pair conserves L exactly in exact arithmetic, so what is being measured here is pure round-off - and round-off scales with the numbers involved, which in this engine span many decades:
+//
+//   a 3 t frame swinging fast              |L| ~ 1e+2
+//   a 40 g foot sphere creeping            |L| ~ 1e-6
+//
+// A single absolute BIG_EPSILON is therefore simultaneously far too tight for the first and far too loose for the second - the same scale problem that was fixed in Mat3.
+//
+// Two scales matter, and the larger of them wins:
+//   - |L| itself, since calcTotalL() rounds off proportionally to what it sums;
+//   - the angular contribution of THIS impulse, since a system starting at rest has |L| = 0 yet still rounds off proportionally to the impulse being applied.
+void HingeJoint::assertAngularMomentumConserved(
+  Vector3 const & L_before,
+  Vector3 const & L_after,
+  double impulse_magnitude
+) const
+{
+  double const scale = max2( max2( L_before.length(), L_after.length() ), impulse_magnitude );
+
+  // Written as !( <= ) so that a NaN difference is reported rather than silently accepted.
+  ZgAssert( !( (L_after - L_before).length() > CONSERVATION_REL_EPS * scale ) );
+}
 #endif
 
 bool HingeJoint::solveVelocityConstraint( double dt ) // returns true, if still has error
@@ -85,14 +110,20 @@ bool HingeJoint::solveAnchorVelocity( double /*dt*/ ) // returns true, if still 
 #ifdef DEBUG_CONSERVATION_CHECKS
   if ( check_L )
   {
-    Vector3 dL = calcTotalL() - L_before;
-    ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
+    // The lever arm turns a linear impulse into an angular one.
+    double const lever = max2( anchor_rA.length(), anchor_rB.length() );
+
+    assertAngularMomentumConserved( L_before, calcTotalL(), delta.length() * lever );
   }
 #endif
 
   // The remaining error is the size of THIS correction, not of the accumulated impulse:
   // a fully converged joint under load carries a large impulse and zero correction.
-  return delta.length() > settings->joints.min_error_for_j;
+  //
+  // The threshold has an absolute floor plus a term relative to the load being carried - see JointSettings::convergence_rel_eps.
+  double const threshold = settings->joints.min_error_for_j + settings->joints.convergence_rel_eps * new_impulse.length();
+
+  return delta.length() > threshold;
 }
 
 bool HingeJoint::solveAxisVelocity( double /*dt*/ ) // returns true, if still has error
@@ -136,13 +167,12 @@ bool HingeJoint::solveAxisVelocity( double /*dt*/ ) // returns true, if still ha
 
 #ifdef DEBUG_CONSERVATION_CHECKS
   if ( check_L )
-  {
-    Vector3 dL = calcTotalL() - L_before;
-    ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
-  }
+    assertAngularMomentumConserved( L_before, calcTotalL(), delta.length() );
 #endif
 
-  return delta.length() > settings->joints.min_error_for_angular_impulse;
+  double const threshold = settings->joints.min_error_for_angular_impulse + settings->joints.convergence_rel_eps * new_impulse.length();
+
+  return delta.length() > threshold;
 }
 
 #else
@@ -226,9 +256,10 @@ bool HingeJoint::solveAnchorVelocity( double dt ) // returns true, if still has 
 #ifdef DEBUG_CONSERVATION_CHECKS
   if ( check_L )
   {
-    Vector3 L_after = calcTotalL();
-    Vector3 dL = L_after - L_before;
-    ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
+    // The lever arm turns a linear impulse into an angular one.
+    double const lever = max2( rA.length(), rB.length() );
+
+    assertAngularMomentumConserved( L_before, calcTotalL(), J.length() * lever );
   }
 #endif
 
@@ -333,11 +364,7 @@ bool HingeJoint::solveAxisVelocity( double dt ) // returns true, if still has er
 
 #ifdef DEBUG_CONSERVATION_CHECKS
   if ( check_L )
-  {
-    Vector3 L_after = calcTotalL();
-    Vector3 dL = L_after - L_before;
-    ZgAssert( dL.isZeroVector( BIG_EPSILON ) );
-  }
+    assertAngularMomentumConserved( L_before, calcTotalL(), angular_impulse.length() );
 #endif
 
   return angular_impulse_len > settings->joints.min_error_for_angular_impulse;

@@ -30,8 +30,30 @@ struct GravitySettings
 // ------------------------------------------------------------------ stepping
 struct StepSettings
 {
-  int substeps            = 5;
-  int velocity_iterations = 30; // per substep; joints and contacts share the loop
+  int substeps                = 5;
+  int max_velocity_iterations = 30; // upper bound; the loop exits sooner when everything reports settled
+
+  // Leave the velocity loop as soon as no constraint moved anything this iteration.
+  //
+  // Every constraint reports whether the impulse DELTA it just applied exceeded its own
+  // min_error_* threshold, so "nobody reported" is a genuine fixed point, not a guess: one
+  // more iteration would change nothing measurable.
+  //
+  // The win is largest exactly where a robot spends most of its time - standing, or walking
+  // at a steady load - because warm starting hands the loop a nearly converged state and
+  // there is little left to do.
+  bool velocity_early_out = true;
+
+  // Iterations to run before the early-out is allowed to fire.
+  //
+  // One iteration is enough to reach a fixed point, but not to PROPAGATE information along
+  // a chain: Gauss-Seidel carries a disturbance one joint per iteration, so a foot impulse
+  // needs three iterations to reach the trunk of a 3-link leg. With the floor at 1, a
+  // freshly landed foot could exit before the trunk has heard about it.
+  //
+  // 4 covers the robot's leg depth with a margin. Raise it if assemblies get deeper.
+  int min_velocity_iterations = 4; // per substep; joints and contacts share the loop
+
   int position_iterations = 10; // per substep, with contact re-detection
 };
 
@@ -79,8 +101,39 @@ struct JointSettings
   // ---- convergence thresholds ("still has error") ----
   // Impulses below these do not count as an error, so the solver loop can stop
   // early once everything settles. Looser = faster, tighter = more precise.
+  // Convergence thresholds of the anchor and axis rows: the smallest impulse DELTA that still counts as work left to do.
+  //
+  // Absolute part, in N*s. Kept so that a constraint carrying almost no load still has a floor to fall below.
   double min_error_for_j               = 1e-4;
   double min_error_for_angular_impulse = 1e-4;
+
+  // Relative part: a delta smaller than this fraction of the impulse the constraint is already carrying is round-off, not progress.
+  //
+  // The absolute part alone cannot do this job, for the usual reason - an impulse of 1e-4 N*s is a rounding error for a 3 t frame and the entire load of a 40 g foot.
+  // On a standing robot the anchors carry ~0.2 N*s each, so the absolute threshold demands five digits of convergence every substep and the loop never exits early.
+  //
+  // Measured on a standing quadruped (12 hinges, 4 contacts, max_velocity_iterations = 30), 200 steps, early-out on; and on a 2 kg arm held horizontal,
+  // where the exact reaction load is known analytically:
+  //
+  //   rel_eps  | quadruped                          | reaction error
+  //            | iterations   anchor error   time   | double    float
+  //   ---------+------------------------------------+-----------------
+  //   0        |   22.8       0.0167 mm     258 ms  |  0.00%    0.00%
+  //   1e-3     |   18.3       0.0190 mm     211 ms  |  0.00%    0.00%
+  //   3e-3     |   13.2       0.0234 mm     166 ms  | +0.46%   -0.45%   <- default
+  //   1e-2     |    6.7       0.0390 mm     102 ms  | -0.74%  -29.08%
+  //   3e-2     |    5.3       0.0677 mm      86 ms  |     -        -
+  //
+  // 3e-3 is the last value that is safe on every axis: 1.6x fewer iterations, joint error still twice inside linear_slop,
+  // and reaction loads good to half a percent in both precisions.
+  //
+  // 1e-2 is tempting - 3.4x fewer iterations, and the joint error is still 13x below position_solver_activation_error, so the SIMULATION is fine.
+  // But the reported reaction loads fall off a cliff there in float (-29%), because an under-converged velocity solve leaves part of the load to the position solver,
+  // which the reaction getters cannot see (HingeJoint::reactionForce() explains this). Use 1e-2 only if nothing reads the reactions.
+  //
+  // Set to 0 for the old purely-absolute behaviour.
+  double convergence_rel_eps           = 3e-3;
+  
   double min_error_for_impulse         = 1e-5;
 };
 
@@ -93,6 +146,11 @@ struct MotorSettings
   double position_erp = 0.07;
 
   double softness = 0.0;
+
+  // Convergence threshold, same role as the one in LimitSettings: below this the motor reports itself as settled and stops holding the velocity loop open.
+  //
+  // A saturated motor reports settled automatically - once the accumulator is pinned at the torque cap the clamp makes every further delta exactly zero - so this cannot deadlock the early-out.
+  double min_error_for_impulse = 1e-4;
 };
 
 

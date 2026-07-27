@@ -7,6 +7,7 @@
 
 #include <zygo/physics/body/articulated_body.h>
 #include <zygo/physics/world/contact_point.h>
+#include <zygo/physics/world/world_state.h>
 #include <zygo/physics/terrain/terrain.h>
 #include <zygo/physics/solver_statistics.h>
 #include <zygo/physics/solver_settings.h>
@@ -49,7 +50,7 @@ public:
   void setFrictionMu      ( double mu ) { settings.contacts.friction_mu = mu; }
   void setRestitutionCoeff( double e )  { settings.contacts.restitution = e; }
 
-  void setVelocityIterations( int n ) { settings.step.velocity_iterations = n; }
+  void setVelocityIterations( int n ) { settings.step.max_velocity_iterations = n; }
   void setPositionIterations( int n ) { settings.step.position_iterations = n; }
   void setSubsteps          ( int n ) { settings.step.substeps = n; }
 
@@ -74,6 +75,21 @@ public:
   SolverStatistics const & positionSolverStatistics() const { return position_solver_statistics; }
 
   inline long long totalCalcTime() const { return total_calc_time; }
+
+  // ------------------------------------------------------------------ state snapshot
+  //
+  // Cheap save / exact restore of the whole simulation - see world_state.h.
+  // Reuse one WorldState across calls: after the first save the vectors keep their capacity and no allocation happens at all.
+  //
+  //   WorldState start;
+  //   world.saveState( start );          // once, after building the scene
+  //   ...
+  //   world.restoreState( start );       // every episode reset
+  //
+  // restoreState() returns false and changes nothing if the snapshot does not match the world it is applied to
+  // (bodies, joints, assemblies or contact spheres added or removed since it was taken).
+  void saveState( WorldState & out ) const;
+  bool restoreState( WorldState const & in );
 
 private:
   void subStep( double dt );

@@ -356,5 +356,36 @@ void RigidBody::draw( IPhysicsDrawer const& drawer ) const
     shape->draw( drawer, center_of_mass_pos, rotation_quaternion );
 }
 
+// ------------------------------------------------------------------------ state snapshot
+void RigidBody::saveState( RigidBodyState & out ) const
+{
+  out.center_of_mass_pos  = center_of_mass_pos;
+  out.rotation_quaternion = rotation_quaternion;
+  out.speed               = speed;
+  out.angular_speed       = angular_speed;
+  out.is_sleeping         = is_sleeping;
+}
+
+void RigidBody::restoreState( RigidBodyState const & in )
+{
+  center_of_mass_pos  = in.center_of_mass_pos;
+  rotation_quaternion = in.rotation_quaternion;
+  speed               = in.speed;
+  angular_speed       = in.angular_speed;
+  is_sleeping         = in.is_sleeping;
+
+  // A static body keeps its infinite mass and zero inverse inertia: makeStatic() is a structural decision, not part of the dynamic state, so it must survive a restore.
+  if ( is_static )
+  {
+    speed.reset();
+    angular_speed.reset();
+    return;
+  }
+
+  // The world inertia tensor is a function of the orientation, so it has to be rebuilt rather than stored - otherwise the first solve of the restored step would use the tensor of the orientation the body happened to have before.
+  normalizeQuaternion();
+  updateWorldInertia();
+}
+
 } // namespace phys
 } // namespace zygo

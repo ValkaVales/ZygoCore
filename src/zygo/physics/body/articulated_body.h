@@ -79,6 +79,21 @@ public:
 
   void wakeUp();
 
+  // ------------------------------------------------------------------ state snapshot
+  // Appends this assembly's bodies and joints to the snapshot, in construction order.
+  // Called by PhysicsWorld::saveState(); usable on its own for a single assembly.
+  void saveState( WorldState & out ) const;
+
+  // Reads back the entries starting at (body_index, joint_index) and advances them.
+  // Returns false if the snapshot does not have enough entries left for this assembly.
+  bool restoreState( WorldState const & in, size_t & body_index, size_t & joint_index );
+
+  // Written separately by PhysicsWorld::restoreState(), which knows this assembly's index.
+  void restoreSleepState( ArticulatedBodyState const & st );
+
+  size_t bodiesCount() const { return objects.size(); }
+  size_t jointsCount() const { return joints.size(); }
+
   // Called once per full step (not per substep) by the PhysicsWorld.
   void updateSleepState( SleepSettings const & sleep_settings, double dt );
 
