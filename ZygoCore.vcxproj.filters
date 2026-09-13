@@ -97,6 +97,15 @@
     <Filter Include="zygo\physics\world">
       <UniqueIdentifier>{85fbf212-263b-4398-b3a2-41104c6a5e51}</UniqueIdentifier>
     </Filter>
+    <Filter Include="zygo\ai">
+      <UniqueIdentifier>{d33abac3-04e1-4576-ac4d-dfa8d638c41d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\ai\nn">
+      <UniqueIdentifier>{390c362b-ff7a-4c79-88b1-3f05ba2cfdde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zygo\ai\rl">
+      <UniqueIdentifier>{1f629d05-8ad2-4ed2-a121-b3d23bc662d3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\zygo\app\sim_clock.cpp">
@@ -324,6 +333,33 @@
     <ClCompile Include="src\zygo\physics\joint\hinge_joint_position_solver.cpp">
       <Filter>zygo\physics\joint</Filter>
     </ClCompile>
+    <ClCompile Include="src\zygo\ai\nn\activation.cpp">
+      <Filter>zygo\ai\nn</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\ai\nn\actor_critic.cpp">
+      <Filter>zygo\ai\nn</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\ai\nn\dense_layer.cpp">
+      <Filter>zygo\ai\nn</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\ai\nn\distributions.cpp">
+      <Filter>zygo\ai\nn</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\ai\nn\net.cpp">
+      <Filter>zygo\ai\nn</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\ai\nn\optimizer.cpp">
+      <Filter>zygo\ai\nn</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\ai\nn\running_normalizer.cpp">
+      <Filter>zygo\ai\nn</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\ai\rl\ppo.cpp">
+      <Filter>zygo\ai\rl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zygo\ai\rl\rollout_buffer.cpp">
+      <Filter>zygo\ai\rl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zygo\app\sim_clock.h">
@@ -538,6 +574,36 @@
     </ClInclude>
     <ClInclude Include="src\zygo\physics\world\world_state.h">
       <Filter>zygo\physics\world</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\nn\activation.h">
+      <Filter>zygo\ai\nn</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\nn\actor_critic.h">
+      <Filter>zygo\ai\nn</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\nn\dense_layer.h">
+      <Filter>zygo\ai\nn</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\nn\distributions.h">
+      <Filter>zygo\ai\nn</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\nn\net.h">
+      <Filter>zygo\ai\nn</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\nn\optimizer.h">
+      <Filter>zygo\ai\nn</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\nn\running_normalizer.h">
+      <Filter>zygo\ai\nn</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\rl\environment.h">
+      <Filter>zygo\ai\rl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\rl\ppo.h">
+      <Filter>zygo\ai\rl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\rl\rollout_buffer.h">
+      <Filter>zygo\ai\rl</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

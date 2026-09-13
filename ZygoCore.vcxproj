@@ -139,6 +139,15 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\zygo\ai\nn\activation.cpp" />
+    <ClCompile Include="src\zygo\ai\nn\actor_critic.cpp" />
+    <ClCompile Include="src\zygo\ai\nn\dense_layer.cpp" />
+    <ClCompile Include="src\zygo\ai\nn\distributions.cpp" />
+    <ClCompile Include="src\zygo\ai\nn\net.cpp" />
+    <ClCompile Include="src\zygo\ai\nn\optimizer.cpp" />
+    <ClCompile Include="src\zygo\ai\nn\running_normalizer.cpp" />
+    <ClCompile Include="src\zygo\ai\rl\ppo.cpp" />
+    <ClCompile Include="src\zygo\ai\rl\rollout_buffer.cpp" />
     <ClCompile Include="src\zygo\app\sim_clock.cpp" />
     <ClCompile Include="src\zygo\containers\minmax.cpp" />
     <ClCompile Include="src\zygo\control\pid\pid.cpp" />
@@ -216,6 +225,16 @@
     <ClCompile Include="src\zygo\random\weighted_choice.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\zygo\ai\nn\activation.h" />
+    <ClInclude Include="src\zygo\ai\nn\actor_critic.h" />
+    <ClInclude Include="src\zygo\ai\nn\dense_layer.h" />
+    <ClInclude Include="src\zygo\ai\nn\distributions.h" />
+    <ClInclude Include="src\zygo\ai\nn\net.h" />
+    <ClInclude Include="src\zygo\ai\nn\optimizer.h" />
+    <ClInclude Include="src\zygo\ai\nn\running_normalizer.h" />
+    <ClInclude Include="src\zygo\ai\rl\environment.h" />
+    <ClInclude Include="src\zygo\ai\rl\ppo.h" />
+    <ClInclude Include="src\zygo\ai\rl\rollout_buffer.h" />
     <ClInclude Include="src\zygo\app\sim_clock.h" />
     <ClInclude Include="src\zygo\containers\circular_buffer\circular_buffer.h" />
     <ClInclude Include="src\zygo\containers\circular_buffer\circular_buffer_base.h" />
