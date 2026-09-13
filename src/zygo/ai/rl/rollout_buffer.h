@@ -3,8 +3,7 @@
 // Storage for one on-policy rollout, plus the advantage computation.
 //
 // Flat contiguous arrays, sized once at construction, never reallocated during training.
-// Deliberately not a vector of per-step structs: the update loop walks one field at a time, and
-// on the robot this buffer will hold tens of thousands of steps.
+// Deliberately not a vector of per-step structs: the update loop walks one field at a time, and on the robot this buffer will hold tens of thousands of steps.
 
 #include <zygo/core/types.h>
 #include <vector>
@@ -70,9 +69,8 @@ public:
   // Generalized Advantage Estimation.
   //   last_value - V(s') after the final stored step; pass 0 only if that step TERMINATED.
   //
-  // Note how terminated and truncated are used differently: a terminated step zeroes both the
-  // bootstrap and the GAE recursion, a truncated one zeroes only the recursion (the trajectory
-  // ends there, but the value of the state it ended in is real).
+  // Note how terminated and truncated are used differently: a terminated step zeroes both the bootstrap and the GAE recursion,
+  // a truncated one zeroes only the recursion (the trajectory ends there, but the value of the state it ended in is real).
   void computeGae( Real last_value, Real gamma, Real gae_lambda );
 
   void normalizeAdvantages();

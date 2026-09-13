@@ -61,7 +61,14 @@ PpoTrainer::PpoTrainer( IEnvironment& env, ActorCriticNet& net, PpoConfig const&
   , sum_episode_return  ( REAL_ZERO )
   , sum_episode_length  ( 0 )
   , finished_episodes   ( 0 )
+  , last_episode_return ( REAL_ZERO )
+  , last_episode_length ( 0 )
+  , total_episodes      ( 0 )
   , total_env_steps     ( 0 )
+  , updates_done        ( 0 )
+  , bootstrap_value     ( REAL_ZERO )
+  , last_value_pred     ( REAL_ZERO )
+  , last_action_idx     ( 0 )
 {
   ZgAssert( net.obsSize() == env.obsSize() );
 
@@ -74,12 +81,15 @@ PpoTrainer::PpoTrainer( IEnvironment& env, ActorCriticNet& net, PpoConfig const&
   net.collectParams( param_blocks );
   optimizer.setParams( param_blocks );
 
-  obs      .assign( (size_t)env.obsSize()        , REAL_ZERO );
-  probs    .assign( (size_t)net.actionOutputs()  , REAL_ZERO );
-  d_policy .assign( (size_t)net.actionOutputs()  , REAL_ZERO );
-  d_log_std.assign( (size_t)net.actionOutputs()  , REAL_ZERO );
-  action   .assign( (size_t)net.actionOutputs()  , REAL_ZERO );
-  eps      .assign( (size_t)net.actionOutputs()  , REAL_ZERO );
+  obs       .assign( (size_t)env.obsSize()        , REAL_ZERO );
+  next_obs  .assign( (size_t)env.obsSize(), REAL_ZERO );
+  env_action.assign( (size_t)( env.isContinuous() ? env.actionSize() : 1 ), REAL_ZERO );
+
+  probs     .assign( (size_t)net.actionOutputs()  , REAL_ZERO );
+  d_policy  .assign( (size_t)net.actionOutputs()  , REAL_ZERO );
+  d_log_std .assign( (size_t)net.actionOutputs()  , REAL_ZERO );
+  action    .assign( (size_t)net.actionOutputs()  , REAL_ZERO );
+  eps       .assign( (size_t)net.actionOutputs()  , REAL_ZERO );
 
   order.resize( (size_t)config.rollout_steps );
   for ( int i = 0; i < config.rollout_steps; ++i )
@@ -152,85 +162,103 @@ void PpoTrainer::actDeterministic( Real const* observation, Real* out_action )
 
 
 // ------------------------------------------------------------------------------- collecting
-void PpoTrainer::collectRollout()
+bool PpoTrainer::stepOnce()
 {
-  buffer.clear();
+  const Real log_prob = sampleAction( obs.data(), action.data(), true );
+  const Real value    = net.value();
 
-  std::vector<Real> env_action( (size_t)( env.isContinuous() ? env.actionSize() : 1 ) );
-  std::vector<Real> next_obs( (size_t)env.obsSize() );
+  last_value_pred = value;
+  last_action_idx = env.isContinuous() ? 0 : (int)action[0];
 
-  Real last_value = REAL_ZERO;
-
-  while ( !buffer.isFull() )
+  // The stored action is the RAW gaussian sample - the log-prob above belongs to it.
+  // What the environment receives is the clamped one.
+  if ( env.isContinuous() )
   {
-    const Real log_prob = sampleAction( obs.data(), action.data(), true );
-    const Real value    = net.value();
-
-    // The stored action is the RAW gaussian sample - the log-prob above belongs to it.
-    // What the environment receives is the clamped one.
-    if ( env.isContinuous() )
+    for ( int i = 0; i < env.actionSize(); ++i )
     {
-      for ( int i = 0; i < env.actionSize(); ++i )
-      {
-        Real v = action[(size_t)i];
-        const Real lim = env.actionLimit( i );
+      Real v = action[(size_t)i];
+      const Real lim = env.actionLimit( i );
 
-        if ( v >  lim ) v =  lim;
-        if ( v < -lim ) v = -lim;
+      if ( v >  lim ) v =  lim;
+      if ( v < -lim ) v = -lim;
 
-        env_action[(size_t)i] = v;
-      }
+      env_action[(size_t)i] = v;
     }
+  } else
+  {
+    env_action[0] = action[0];
+  }
+
+  StepResult sr = env.step( env_action.data(), next_obs.data() );
+
+  ++cur_episode_length;
+  ++total_env_steps;
+  cur_episode_return += sr.reward;
+
+  if ( !sr.terminated && cur_episode_length >= max_steps_in_episode )
+    sr.truncated = true;
+
+  buffer.add( obs.data(), action.data(), log_prob, value, sr.reward, sr.terminated, sr.truncated );
+
+  for ( int i = 0; i < env.obsSize(); ++i )
+    obs[(size_t)i] = next_obs[(size_t)i];
+
+  if ( buffer.isFull() )
+  {
+    // V(s') for the bootstrap must be taken BEFORE any reset.
+    if ( sr.terminated )
+      bootstrap_value = REAL_ZERO;
     else
     {
-      env_action[0] = action[0];
-    }
-
-    StepResult sr = env.step( env_action.data(), next_obs.data() );
-
-    ++cur_episode_length;
-    ++total_env_steps;
-    cur_episode_return += sr.reward;
-
-    if ( !sr.terminated && cur_episode_length >= max_steps_in_episode )
-      sr.truncated = true;
-
-    buffer.add( obs.data(), action.data(), log_prob, value, sr.reward, sr.terminated, sr.truncated );
-
-    for ( int i = 0; i < env.obsSize(); ++i )
-      obs[(size_t)i] = next_obs[(size_t)i];
-
-    if ( buffer.isFull() )
-    {
-      // V(s') for the bootstrap must be taken BEFORE any reset.
-      if ( !sr.terminated )
-      {
-        net.forward( obs.data(), false, false );
-        last_value = net.value();
-      }
-      else
-      {
-        last_value = REAL_ZERO;
-      }
-    }
-
-    if ( sr.isDone() )
-    {
-      sum_episode_return += cur_episode_return;
-      sum_episode_length += cur_episode_length;
-      ++finished_episodes;
-
-      cur_episode_return = REAL_ZERO;
-      cur_episode_length = 0;
-
-      env.reset( obs.data() );
+      net.forward( obs.data(), false, false );
+      bootstrap_value = net.value();
     }
   }
 
-  buffer.computeGae( last_value, config.gamma, config.gae_lambda );
+  if ( sr.isDone() )
+  {
+    last_episode_return = cur_episode_return;
+    last_episode_length = cur_episode_length;
+
+    sum_episode_return += cur_episode_return;
+    sum_episode_length += cur_episode_length;
+    ++finished_episodes;
+    ++total_episodes;
+
+    cur_episode_return = REAL_ZERO;
+    cur_episode_length = 0;
+
+    env.reset( obs.data() );
+  }
+
+  if ( !buffer.isFull() )
+    return false;
+
+  buffer.computeGae( bootstrap_value, config.gamma, config.gae_lambda );
 
   if ( config.normalize_advantage )
     buffer.normalizeAdvantages();
+
+  update();
+
+  ++updates_done;
+
+  last_stats.episodes_finished = finished_episodes;
+  last_stats.total_env_steps   = total_env_steps;
+
+  if ( finished_episodes > 0 )
+  {
+    last_stats.mean_episode_return = sum_episode_return / (Real)finished_episodes;
+    last_stats.mean_episode_length = (Real)sum_episode_length / (Real)finished_episodes;
+  }
+
+  sum_episode_return = REAL_ZERO;
+  sum_episode_length = 0;
+  finished_episodes  = 0;
+
+  buffer.clear();
+
+  return true;
 }
 
 
@@ -402,21 +430,8 @@ void PpoTrainer::update()
 
 PpoStats PpoTrainer::runIteration()
 {
-  sum_episode_return = REAL_ZERO;
-  sum_episode_length = 0;
-  finished_episodes  = 0;
-
-  collectRollout();
-  update();
-
-  last_stats.episodes_finished = finished_episodes;
-  last_stats.total_env_steps   = total_env_steps;
-
-  if ( finished_episodes > 0 )
-  {
-    last_stats.mean_episode_return = sum_episode_return / (Real)finished_episodes;
-    last_stats.mean_episode_length = (Real)sum_episode_length / (Real)finished_episodes;
-  }
+  while ( !stepOnce() )
+    ;
 
   return last_stats;
 }

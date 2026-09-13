@@ -4,23 +4,24 @@
 //
 // Why PPO and not the online actor-critic that trains the cart-pole:
 //
-// The online A2C does exactly one gradient step per environment step. On the cart-pole an
-// environment step costs nothing, so that is a bargain. On the robot dog one step of the physics
-// simulator costs four legs' worth of constraint solving, and a real hardware step costs 2 ms of
-// wall clock that cannot be bought back. The whole game becomes "how much learning can I extract
-// from each collected sample", and the answer is: collect a rollout once, then reuse it for several
-// epochs of mini-batch updates. Doing that naively destroys the policy, because after the first
-// epoch the data is no longer on-policy. PPO's clipped objective is precisely the fix - it refuses
-// to move the policy far from the one that collected the data, so the reuse stays valid.
+// The online A2C does exactly one gradient step per environment step.
+// On the cart-pole an environment step costs nothing, so that is a bargain.
+// On the robot dog one step of the physics simulator costs four legs' worth of constraint solving,
+// and a real hardware step costs 2 ms of wall clock that cannot be bought back.
+// 
+// The whole game becomes "how much learning can I extract from each collected sample", and the answer is:
+// collect a rollout once, then reuse it for several epochs of mini-batch updates.
+// 
+// Doing that naively destroys the policy, because after the first epoch the data is no longer on-policy.
+// PPO's clipped objective is precisely the fix - it refuses to move the policy far from the one that collected the data, so the reuse stays valid.
 //
 // Works with both head types:
 //   DISCRETE   - softmax over actionOutputs() logits
-//   CONTINUOUS - gaussian with a learnable per-dimension log-sigma; the sample is squashed into
-//                the environment's action limits by clamping, and the LOG-PROB IS COMPUTED BEFORE
-//                THE CLAMP. (Computing it after would make the density wrong at the boundaries;
-//                tanh squashing with the proper Jacobian correction is the alternative, but for a
-//                residual joint-angle policy the action almost never sits at the limit, and
-//                clamping keeps the maths honest and simple.)
+//   CONTINUOUS - gaussian with a learnable per-dimension log-sigma; the sample is squashed into the environment's action limits by clamping,
+//                and the LOG-PROB IS COMPUTED BEFORE THE CLAMP.
+//                (Computing it after would make the density wrong at the boundaries;
+//                tanh squashing with the proper Jacobian correction is the alternative, but for a residual joint-angle policy the action almost never sits at the limit,
+//                and clamping keeps the maths honest and simple.)
 
 #include <zygo/ai/nn/actor_critic.h>
 #include <zygo/ai/nn/optimizer.h>
@@ -98,6 +99,8 @@ private:
 
   // scratch
   std::vector<Real> obs;
+  std::vector<Real> next_obs;
+  std::vector<Real> env_action;
   std::vector<Real> probs;
   std::vector<Real> d_policy;
   std::vector<Real> d_log_std;
@@ -114,7 +117,20 @@ private:
   int  sum_episode_length;
   int  finished_episodes;
 
+  Real last_episode_return;
+  int  last_episode_length;
+  int  total_episodes;
+
   long long total_env_steps;
+  int       updates_done;
+
+  // Bootstrap value of the state that follows the last stored step. Latched inside stepOnce(),
+  // because by the time the update runs the environment may already have been reset.
+  Real bootstrap_value;
+
+  // Last acted-upon quantities, kept for display and for real-time control loops.
+  Real last_value_pred;
+  int  last_action_idx;
 
   PpoStats last_stats;
 
@@ -131,15 +147,39 @@ public:
   // Collects one rollout and performs one full PPO update on it.
   PpoStats runIteration();
 
+  // Advances the environment by EXACTLY ONE step. When that step fills the rollout, the full PPO update runs and the function returns true.
+  //
+  // runIteration() is just a loop over this. The step-wise form exists because a real-time loop - a renderer that wants to show every frame,
+  // or a hardware control loop that must return within its period - cannot afford to disappear inside a whole rollout.
+  bool stepOnce();
+
   PpoStats const& lastStats() const { return last_stats; }
 
   inline long long totalEnvSteps() const { return total_env_steps; }
+  inline int       updatesDone  () const { return updates_done; }
+
+  // --- observability, for renderers and logging ---------------------------------------------
+  inline Real const* currentObs() const { return obs.data(); }
+
+  inline int rolloutFill    () const { return buffer.size(); }
+  inline int rolloutCapacity() const { return config.rollout_steps; }
+
+  inline Real const* lastActionProbs() const { return probs.data(); }  // discrete policies
+  inline Real const* lastAction     () const { return action.data(); }
+  inline int         lastActionIdx  () const { return last_action_idx; }
+  inline Real        lastValue      () const { return last_value_pred; }
+
+  inline int  currentEpisodeLength() const { return cur_episode_length; }
+  inline Real currentEpisodeReturn() const { return cur_episode_return; }
+
+  inline int  lastEpisodeLength() const { return last_episode_length; }
+  inline Real lastEpisodeReturn() const { return last_episode_return; }
+  inline int  totalEpisodes    () const { return total_episodes; }
 
   // Greedy / mean action, no sampling - for evaluating or for running on the robot.
   void actDeterministic( Real const* observation, Real* out_action );
 
 private:
-  void collectRollout();
   void update();
 
   // Runs the net on one observation and produces the sampled action plus its log-prob.
