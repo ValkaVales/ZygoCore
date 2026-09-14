@@ -73,6 +73,13 @@ public:
   // a truncated one zeroes only the recursion (the trajectory ends there, but the value of the state it ended in is real).
   void computeGae( Real last_value, Real gamma, Real gae_lambda );
 
+  // Marks the most recent stored step as truncated.
+  //
+  // Needed when the episode is ended from OUTSIDE the environment - a viewer restarting the run, an operator stopping a real robot.
+  // Without it GAE happily continues the recursion across the cut and mixes two unrelated trajectories into one advantage estimate.
+  void markLastTruncated();
+
+  //
   void normalizeAdvantages();
 
   Real meanReward() const;

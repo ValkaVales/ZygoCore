@@ -56,6 +56,14 @@ struct PpoConfig
 
   Real learning_rate;
 
+  // Rescales the advantages of every rollout to zero mean / unit variance.
+  // The standard default,/ and the right one when the reward scale is unknown or drifts.
+  // 
+  // But it is NOT free: once a policy already succeeds on most of a rollout, the true advantages are ~0,
+  // and normalization inflates what is left - noise - back to unit size, so the policy keeps taking full-size random steps and never sharpens.
+  // 
+  // On the cart-pole that alone was a 30x difference in how long the SAMPLING policy took to stop falling.
+  // Turn it off when rewards are already well scaled.
   bool normalize_advantage;
 
   // Early stop: if the policy has already moved this far in KL, stop the remaining epochs.
@@ -153,6 +161,15 @@ public:
   // or a hardware control loop that must return within its period - cannot afford to disappear inside a whole rollout.
   bool stepOnce();
 
+  // Ends the current episode from outside and starts a fresh one.
+  //
+  // The environment cannot simply be reset behind the trainer's back: the trainer caches the current observation,
+  // and a reset it does not know about leaves it acting on a state that no longer exists.
+  // 
+  // This does both halves - cuts the stored trajectory, then resets the env into the trainer's own observation buffer.
+  void resetEpisode();
+
+  //
   PpoStats const& lastStats() const { return last_stats; }
 
   inline long long totalEnvSteps() const { return total_env_steps; }

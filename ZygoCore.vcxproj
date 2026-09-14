@@ -220,6 +220,7 @@
     <ClCompile Include="src\zygo\physics\shape\shape_sphere.cpp" />
     <ClCompile Include="src\zygo\physics\solver_statistics.cpp" />
     <ClCompile Include="src\zygo\physics\terrain\terrain.cpp" />
+    <ClCompile Include="src\zygo\physics\terrain\terrain_generator.cpp" />
     <ClCompile Include="src\zygo\physics\world\physics_world.cpp" />
     <ClCompile Include="src\zygo\random\random.cpp" />
     <ClCompile Include="src\zygo\random\weighted_choice.cpp" />
@@ -301,6 +302,7 @@
     <ClInclude Include="src\zygo\physics\solver_settings.h" />
     <ClInclude Include="src\zygo\physics\solver_statistics.h" />
     <ClInclude Include="src\zygo\physics\terrain\terrain.h" />
+    <ClInclude Include="src\zygo\physics\terrain\terrain_generator.h" />
     <ClInclude Include="src\zygo\physics\world\contact_point.h" />
     <ClInclude Include="src\zygo\physics\world\physics_world.h" />
     <ClInclude Include="src\zygo\physics\world\world_state.h" />

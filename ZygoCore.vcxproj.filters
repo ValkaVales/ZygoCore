@@ -360,6 +360,9 @@
     <ClCompile Include="src\zygo\ai\rl\rollout_buffer.cpp">
       <Filter>zygo\ai\rl</Filter>
     </ClCompile>
+    <ClCompile Include="src\zygo\physics\terrain\terrain_generator.cpp">
+      <Filter>zygo\physics\terrain</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zygo\app\sim_clock.h">
@@ -604,6 +607,9 @@
     </ClInclude>
     <ClInclude Include="src\zygo\ai\rl\rollout_buffer.h">
       <Filter>zygo\ai\rl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\terrain\terrain_generator.h">
+      <Filter>zygo\physics\terrain</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

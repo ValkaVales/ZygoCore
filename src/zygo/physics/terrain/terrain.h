@@ -84,6 +84,17 @@ public:
   int    sizeY()    const { return ny; }
   double cellSize() const { return cell; }
 
+  // Grid placement and raw node heights.
+  //
+  // Needed by any renderer that does not want draw() to submit the WHOLE field: a 24 x 24 m field at a 4 cm cell is 720 000 triangles,
+  // and a viewer following a robot only ever needs the few metres around it.
+  // 
+  // Read-only, so nothing can resize the grid behind the solver's back.
+  double originX() const { return origin_x; }
+  double originY() const { return origin_y; }
+
+  std::vector<double> const& nodeHeights() const { return heights; }
+
   void setHeight( int ix, int iy, double h );
 
   void draw( IPhysicsDrawer const& drawer ) const override;

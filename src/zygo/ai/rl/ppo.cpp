@@ -428,6 +428,17 @@ void PpoTrainer::update()
 }
 
 
+void PpoTrainer::resetEpisode()
+{
+  buffer.markLastTruncated();
+
+  cur_episode_return = REAL_ZERO;
+  cur_episode_length = 0;
+
+  env.reset( obs.data() );
+}
+
+
 PpoStats PpoTrainer::runIteration()
 {
   while ( !stepOnce() )

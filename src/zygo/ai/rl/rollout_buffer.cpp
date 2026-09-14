@@ -82,6 +82,12 @@ void RolloutBuffer::computeGae( Real last_value, Real gamma, Real gae_lambda )
   }
 }
 
+void RolloutBuffer::markLastTruncated()
+{
+  if ( count > 0 )
+    truncated[(size_t)count - 1] = 1;
+}
+
 void RolloutBuffer::normalizeAdvantages()
 {
   if ( count < 2 )
