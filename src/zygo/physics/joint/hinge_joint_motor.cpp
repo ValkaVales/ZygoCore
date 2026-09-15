@@ -93,10 +93,12 @@ void HingeJoint::applyExternalActuatorImpulse( double dt )
 
 void HingeJoint::prepareVelocitySolve( double dt )
 {
-  // The servo motor and the limits are re-derived from scratch every substep
-  // (they are one-sided / torque-capped, so a stale accumulator would be a wrong clamp, not a good guess).
+  // The limits are re-derived from scratch every substep (one-sided rows that switch on and off).
+  // The servo accumulator is kept when JointSettings::motor_warm_starting is on: warmStartVelocitySolve() rescales it, clamps it to the NEW torque cap and re-applies it.
   // The anchor and axis accumulators are NOT touched here - warm starting them across substeps is the whole point.
-  accumulated_motor_impulse       = 0.0;
+  if ( !settings->joints.motor_warm_starting )
+    accumulated_motor_impulse       = 0.0;
+
   accumulated_lower_limit_impulse = 0.0;
   accumulated_upper_limit_impulse = 0.0;
 

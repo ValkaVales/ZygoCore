@@ -1,6 +1,7 @@
 #include "hinge_joint.h"
 #include <zygo/physics/body/rigid_body.h>
 #include <zygo/physics/phys_consts.h>
+#include <zygo/math/common/scalar.h>
 
 
 namespace zygo {
@@ -146,6 +147,7 @@ void HingeJoint::warmStartVelocitySolve( double dt )
   {
     accumulated_anchor_impulse.reset();
     accumulated_axis_impulse.reset();
+    accumulated_motor_impulse = 0.0;
     accumulated_impulse_dt = 0.0;
     return;
   }
@@ -164,6 +166,27 @@ void HingeJoint::warmStartVelocitySolve( double dt )
   {
     objA->applyImpulseAtWorldPoint(  accumulated_anchor_impulse, anchor_point );
     objB->applyImpulseAtWorldPoint( -accumulated_anchor_impulse, anchor_point );
+  }
+
+  // The servo. Only the two constraint modes carry an accumulator worth reusing: MOTOR_TORQUE is an external impulse applied elsewhere, and MOTOR_OFF has none.
+  if ( settings->joints.motor_warm_starting && (motor_mode == MOTOR_VELOCITY || motor_mode == MOTOR_POSITION) )
+  {
+    accumulated_motor_impulse *= ratio;
+
+    // The controller may have lowered the torque cap since the impulse was stored (torque-speed droop), so clamp BEFORE applying.
+    double const max_impulse = motor_max_torque * dt;
+    toRange( accumulated_motor_impulse, -max_impulse, max_impulse );
+
+    if ( accumulated_motor_impulse != 0.0 )
+    {
+      Vector3 const angular_impulse = cached_axis_A * accumulated_motor_impulse;
+
+      objA->applyAngularImpulse( -angular_impulse );
+      objB->applyAngularImpulse(  angular_impulse );
+    }
+  } else
+  {
+    accumulated_motor_impulse = 0.0;
   }
 
   if ( axis_valid )

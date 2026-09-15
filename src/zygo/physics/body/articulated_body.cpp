@@ -115,6 +115,45 @@ bool ArticulatedBody::solvePositionsOnce()
   return has_error;
 }
 
+bool ArticulatedBody::hasReducedModel()
+{
+  if ( reduced_model_state == 0 )
+    reduced_model_state = (initialized && reduced.build( *this )) ? 1 : -1;
+
+  return reduced_model_state > 0;
+}
+
+void ArticulatedBody::reducedPrepare( SolverSettings const & s, double dt )
+{
+  ZgAssert( reduced_model_state > 0 );
+  reduced.prepare( s, dt );
+}
+
+int ArticulatedBody::reducedSolve( SolverSettings const & s, double dt, std::vector<ContactPoint> & contacts )
+{
+  ZgAssert( reduced_model_state > 0 );
+  return reduced.solve( s, dt, contacts );
+}
+
+void ArticulatedBody::reducedIntegrate( double dt )
+{
+  ZgAssert( reduced_model_state > 0 );
+  reduced.integrate( dt );
+
+  // integrate() already normalized every quaternion and refreshed every world inertia.
+  updateTotalCenterOfMass();
+}
+
+bool ArticulatedBody::reducedSolvePositions( SolverSettings const & s, std::vector<ContactPoint> & contacts )
+{
+  ZgAssert( reduced_model_state > 0 );
+
+  bool const has_error = reduced.solvePositions( s, contacts );
+  updateTotalCenterOfMass();
+
+  return has_error;
+}
+
 void ArticulatedBody::finalizeStep()
 {
   for ( auto & obj : objects )

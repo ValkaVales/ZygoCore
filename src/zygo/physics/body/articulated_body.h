@@ -6,6 +6,7 @@
 #include <zygo/physics/body/rigid_body.h>
 #include <zygo/physics/joint/hinge_joint.h>
 #include <zygo/physics/solver_statistics.h>
+#include <zygo/physics/articulated/reduced_articulation.h>
 #include <memory>
 #include <vector>
 
@@ -18,6 +19,8 @@ class PhysicsWorld;
 
 class ArticulatedBody
 {
+  friend class ReducedArticulation;
+
 private:
   bool initialized = false;
   PhysicsWorld * phys_world = nullptr;
@@ -35,6 +38,10 @@ private:
   SolverStatistics position_solver_statistics;
 
   long long total_calc_time = 0LL; // microseconds
+
+  // Joint-space model for SolverType::REDUCED_COORDINATES, built on first use.
+  ReducedArticulation reduced;
+  int reduced_model_state = 0; // 0 - not built yet, 1 - valid, -1 - not a tree, stays on the SI path
 
 public:
   explicit ArticulatedBody( PhysicsWorld * phys_world );
@@ -69,6 +76,14 @@ public:
   bool solvePositionsOnce();
 
   void finalizeStep();                    // quaternion normalization + world inertia + the total center of mass
+
+  // Step phases of SolverType::REDUCED_COORDINATES - see reduced_articulation.h.
+  // hasReducedModel() builds the model on the first call; false means the assembly is not a tree of hinges and must stay on the SI path.
+  bool hasReducedModel();
+  void reducedPrepare  ( SolverSettings const & s, double dt );
+  int  reducedSolve    ( SolverSettings const & s, double dt, std::vector<ContactPoint> & contacts ); // returns iterations used
+  void reducedIntegrate( double dt );
+  bool reducedSolvePositions( SolverSettings const & s, std::vector<ContactPoint> & contacts ); // returns true, if still has error
 
   // ------------------------------------------------------------------ sleeping
   // A sleeping assembly is skipped by every step phase, so a standing robot costs

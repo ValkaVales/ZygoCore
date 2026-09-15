@@ -2,8 +2,8 @@
 
 set SOURCE=D:\VS\ZygoCore
 set DEST0=D:\VS\ZygoGL
+set DEST1=D:\VS\TestZygoCore
 
-rem set DEST=D:\VS\TestZygoCore
 rem set DEST=D:\VS\TitanBrusok
 rem set DEST=D:\VS\TestPID
 rem set DEST=D:\VS\PhysRigidBody
@@ -47,6 +47,9 @@ copy %SOURCE%\x64\Release\zygocore.lib %DEST%\lib_release\
 
 copy %SOURCE%\x64\Debug\zygocore.lib %DEST0%\lib\
 copy %SOURCE%\x64\Release\zygocore.lib %DEST0%\lib_release\
+
+copy %SOURCE%\x64\Debug\zygocore.lib %DEST1%\lib\
+copy %SOURCE%\x64\Release\zygocore.lib %DEST1%\lib_release\
 
 goto:eof
 

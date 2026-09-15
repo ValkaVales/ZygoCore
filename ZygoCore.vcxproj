@@ -201,6 +201,7 @@
     <ClCompile Include="src\zygo\math\vector\vec3int.cpp" />
     <ClCompile Include="src\zygo\math\vector\vec3short.cpp" />
     <ClCompile Include="src\zygo\math\vector\vec4.cpp" />
+    <ClCompile Include="src\zygo\physics\articulated\reduced_articulation.cpp" />
     <ClCompile Include="src\zygo\physics\body\articulated_body.cpp" />
     <ClCompile Include="src\zygo\physics\body\rigid_body.cpp" />
     <ClCompile Include="src\zygo\physics\body\rigid_body_create.cpp" />
@@ -286,6 +287,7 @@
     <ClInclude Include="src\zygo\math\vector\vec3int.h" />
     <ClInclude Include="src\zygo\math\vector\vec3short.h" />
     <ClInclude Include="src\zygo\math\vector\vec4.h" />
+    <ClInclude Include="src\zygo\physics\articulated\reduced_articulation.h" />
     <ClInclude Include="src\zygo\physics\body\articulated_body.h" />
     <ClInclude Include="src\zygo\physics\body\rigid_body.h" />
     <ClInclude Include="src\zygo\physics\i_physics_drawer.h" />

@@ -17,6 +17,7 @@ namespace phys {
 class RigidBody
 {
   friend class HingeJoint;
+  friend class ReducedArticulation;
 
 private:
   bool initialized;

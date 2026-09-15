@@ -82,8 +82,80 @@ void PhysicsWorld::processTick( double dt )
   total_calc_time += std::chrono::duration_cast<std::chrono::microseconds>( end - start ).count();
 }
 
+bool PhysicsWorld::canUseReducedSolver() const
+{
+  if ( settings.step.solver != SolverType::REDUCED_COORDINATES )
+    return false;
+
+  for ( auto * co : objects )
+    if ( !co->hasReducedModel() )
+      return false;
+
+  return true;
+}
+
+void PhysicsWorld::subStepReduced( double dt )
+{
+  int awake_count = 0;
+
+  for ( auto * co : objects )
+    if ( !co->isSleeping() )
+      ++awake_count;
+
+  if ( awake_count == 0 )
+    return;
+
+  // 1) Joint-space dynamics without contacts: gravity, open-loop torques, velocity products. Writes the free body velocities.
+  for ( auto * co : objects )
+    if ( !co->isSleeping() )
+      co->reducedPrepare( settings, dt );
+
+  // 2) Contacts see the free velocities, as in the SI path (after gravity, before any warm start).
+  detectContacts( dt );
+
+  // 3) Servos, limits, contacts.
+  int iterations = 0;
+
+  for ( auto * co : objects )
+    if ( !co->isSleeping() )
+      iterations = max2( iterations, co->reducedSolve( settings, dt, contacts ) );
+
+  velocity_solver_statistics.iterations_count = iterations;
+  velocity_solver_statistics.update();
+
+  // 4) Integration and forward kinematics.
+  for ( auto * co : objects )
+    if ( !co->isSleeping() )
+      co->reducedIntegrate( dt );
+
+  // 5) Position phase, contacts only - the hinges cannot drift. Same loop shape as the SI path.
+  for ( int i = 0; i < settings.step.position_iterations; ++i )
+  {
+    position_solver_statistics.iterations_count = i + 1;
+
+    detectContacts( 0.0 );
+
+    bool has_error = false;
+
+    for ( auto * co : objects )
+      if ( !co->isSleeping() && co->reducedSolvePositions( settings, contacts ) )
+        has_error = true;
+
+    if ( !has_error )
+      break;
+  }
+
+  position_solver_statistics.update();
+}
+
 void PhysicsWorld::subStep( double dt )
 {
+  if ( canUseReducedSolver() )
+  {
+    subStepReduced( dt );
+    return;
+  }
+
   // A sleeping assembly is skipped by every phase below.
   // If they are ALL asleep there is nothing left to solve at all - not even a contact, since detectContacts() ignores their spheres too.
   int awake_count = 0;

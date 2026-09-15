@@ -106,6 +106,9 @@
     <Filter Include="zygo\ai\rl">
       <UniqueIdentifier>{1f629d05-8ad2-4ed2-a121-b3d23bc662d3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="zygo\physics\articulated">
+      <UniqueIdentifier>{a3c3a4c0-f0f2-4e09-92fe-d3041f782747}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\zygo\app\sim_clock.cpp">
@@ -363,6 +366,9 @@
     <ClCompile Include="src\zygo\physics\terrain\terrain_generator.cpp">
       <Filter>zygo\physics\terrain</Filter>
     </ClCompile>
+    <ClCompile Include="src\zygo\physics\articulated\reduced_articulation.cpp">
+      <Filter>zygo\physics\articulated</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zygo\app\sim_clock.h">
@@ -610,6 +616,9 @@
     </ClInclude>
     <ClInclude Include="src\zygo\physics\terrain\terrain_generator.h">
       <Filter>zygo\physics\terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\physics\articulated\reduced_articulation.h">
+      <Filter>zygo\physics\articulated</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -28,8 +28,32 @@ struct GravitySettings
 
 
 // ------------------------------------------------------------------ stepping
+enum class SolverType
+{
+  // Every body keeps 6 DOF, hinges are constraint rows, everything is solved together by sequential impulses.
+  SEQUENTIAL_IMPULSES,
+
+  // Joint-space dynamics: hinges are exact by construction, only servos, limits and contacts are iterated (articulated/reduced_articulation.h).
+  // Works for trees of hinges; any assembly that is not one silently falls back to SEQUENTIAL_IMPULSES for the whole world.
+  //
+  // Same robot, same gait, DT = 5 ms:
+  //
+  //                                 ms/frame   sag     jitter z   hinge gap
+  //   SI, 2 x 100 (old default)       0.59    0.9 mm    35 um     0.42 mm
+  //   SI, 10 x 200 (the reference)    2.1     -          9 um     0.03 mm
+  //   REDUCED, 2 x 20                 0.05    0         17 um     0
+  //   REDUCED, 2 x 10                 0.04    0         21 um     0
+  //   REDUCED, 1 x 10, 0 pos. iter.   0.02    0.3 mm    35 um     0
+  //
+  // Two substeps are the sweet spot. At ONE substep keep position_iterations = 0 on flat ground (see ReducedArticulation::solvePositions()),
+  // and remember that the servo stiffness is erp / substep - one substep also means a servo half as stiff as at two.
+  REDUCED_COORDINATES
+};
+
 struct StepSettings
 {
+  SolverType solver = SolverType::SEQUENTIAL_IMPULSES;
+
   int substeps                = 5;
   int max_velocity_iterations = 30; // upper bound; the loop exits sooner when everything reports settled
 
@@ -76,6 +100,24 @@ struct JointSettings
   // damping it trades a little stiffness for a much smaller transient - the same knob
   // Bullet exposes as m_warmstartingFactor.
   double warm_start_factor = 0.85;
+
+  // Warm start the position/velocity SERVO too, not only the anchor and the axis.
+  //
+  // This used to be off by construction: prepareVelocitySolve() zeroed the servo accumulator every substep, on the grounds that a torque-capped row
+  // is "a clamp, not a guess". But the clamp is re-applied to the warm-started value, so a stale impulse can never exceed the new cap - and a servo
+  // holding a leg under load carries almost the same torque from one substep to the next, exactly like an anchor does.
+  //
+  // Starting it from zero meant every substep had to rebuild the whole holding torque of all twelve joints through the Gauss-Seidel chain,
+  // which is where most of the iterations went. Measured on the walking quadruped (WALK1, DT = 5 ms, tools/walk_benchmark.cpp;
+  // sag = trunk height below a converged 10 x 200 run):
+  //
+  //   substeps x iterations        off                                   on
+  //   2 x 100                0.59 ms, sag 0.9 mm, 99 iterations     0.25 ms, sag 1.0 mm, 39 iterations (early-out)
+  //   2 x 20                 0.15 ms, sag 9.8 mm, feet slide         0.14 ms, sag 2.0 mm
+  //   2 x 9                  falls after 9 s                         0.08 ms, sag 4.9 mm, walks
+  //
+  // Uses warm_start_factor, like the anchor and axis rows.
+  bool motor_warm_starting = true;
 
   // ---- velocity solver (Baumgarte bias) ----
   double position_beta = 0.37;  // Baumgarte share for the anchor position error
@@ -143,6 +185,9 @@ struct MotorSettings
 {
   // ERP-like coefficient for the position motor: the fraction of the angle error
   // we try to remove per simulation step. Good values for DT = 0.01: 0.03 .. 0.15.
+  //
+  // NOTE "per step" means per SUBSTEP: the target speed is position_erp * error / substep_dt, so the servo gets stiffer with every substep added.
+  // At DT = 5 ms: 2 substeps -> 28 1/s, 5 substeps -> 70 1/s. Visible in a jump: 38.3 cm peak trunk height at 2 substeps, 39.4 at 5, 36.7 at 1.
   double position_erp = 0.07;
 
   double softness = 0.0;

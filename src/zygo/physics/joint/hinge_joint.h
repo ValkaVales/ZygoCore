@@ -31,6 +31,8 @@ class RigidBody;
 
 class HingeJoint
 {
+  friend class ReducedArticulation;
+
 private:
   enum MotorMode
   {
@@ -161,12 +163,13 @@ public:
   // hardware too, which is not true of a "perfect" joint angle.
   //
   // ACCURACY: these report the impulses the VELOCITY solver applied.
-  // When that solve is allowed to stop early (StepSettings::velocity_early_out) part of the load is carried by the position solver instead,\
-  // and that part does not appear here - the pose stays correct, but the reported load understates the true one.\
+  // When that solve is allowed to stop early (StepSettings::velocity_early_out) part of the load is carried by the position solver instead,
+  // and that part does not appear here - the pose stays correct, but the reported load understates the true one.
   // At the default JointSettings::convergence_rel_eps the gap is under half a percent; the table there gives the numbers.
   // For exact reactions set velocity_early_out = false.
   //
   // Valid after a step has run; all zero before the first one.
+  // Under SolverType::REDUCED_COORDINATES there are no anchor/axis rows to read them from, so these two stay zero there (motorTorque() and limitTorque() are valid).
   Vector3 reactionForce()  const; // N,   the force  holding the anchors together
   Vector3 reactionTorque() const; // N*m, the torque holding the axes aligned
 

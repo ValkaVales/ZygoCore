@@ -42,7 +42,7 @@ public:
   // Draws the registered contact spheres. Bodies and the terrain draw themselves.
   void draw( IPhysicsDrawer const& drawer ) const;
 
-  // Convenience wrappers over `settings` (brevity at the call sites).
+  // Convenience wrappers over `settings`
   void setGravity( Vector3 const & g ) { settings.gravity.g = g; settings.gravity.enabled = true; }
   void setGravityEnabled( bool on )    { settings.gravity.enabled = on; }
   void setTerrain( ITerrain * t )      { terrain = t; }
@@ -53,6 +53,8 @@ public:
   void setVelocityIterations( int n ) { settings.step.max_velocity_iterations = n; }
   void setPositionIterations( int n ) { settings.step.position_iterations = n; }
   void setSubsteps          ( int n ) { settings.step.substeps = n; }
+
+  void setSolverType        ( SolverType solver_type ) { settings.step.solver = solver_type; }
 
   //
   Vector3 const & getGravity() const { return settings.gravity.g; }
@@ -93,6 +95,9 @@ public:
 
 private:
   void subStep( double dt );
+  void subStepReduced( double dt ); // SolverType::REDUCED_COORDINATES
+
+  bool canUseReducedSolver() const;
 
   bool solveContactPositionsOnce();
 
