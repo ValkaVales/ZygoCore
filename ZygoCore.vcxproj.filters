@@ -369,6 +369,9 @@
     <ClCompile Include="src\zygo\physics\articulated\reduced_articulation.cpp">
       <Filter>zygo\physics\articulated</Filter>
     </ClCompile>
+    <ClCompile Include="src\zygo\ai\rl\parallel_ppo.cpp">
+      <Filter>zygo\ai\rl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zygo\app\sim_clock.h">
@@ -619,6 +622,9 @@
     </ClInclude>
     <ClInclude Include="src\zygo\physics\articulated\reduced_articulation.h">
       <Filter>zygo\physics\articulated</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zygo\ai\rl\parallel_ppo.h">
+      <Filter>zygo\ai\rl</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

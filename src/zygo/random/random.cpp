@@ -4,11 +4,6 @@
 
 namespace zygo {
 
-u64 Random::s[4] = { 0x9E3779B97F4A7C15ULL, 0xBF58476D1CE4E5B9ULL, 0x94D049BB133111EBULL, 0x2545F4914F6CDD1DULL };
-
-bool   Random::has_gauss_next = false;
-Real Random::gauss_next = REAL_ZERO;
-
 
 // splitmix64 — стандартный способ развернуть один сид в полное состояние
 static u64 splitmix64( u64& x )

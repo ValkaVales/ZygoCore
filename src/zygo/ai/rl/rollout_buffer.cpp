@@ -88,6 +88,20 @@ void RolloutBuffer::markLastTruncated()
     truncated[(size_t)count - 1] = 1;
 }
 
+void RolloutBuffer::bootstrapLastStep( Real next_state_value, Real gamma )
+{
+  if ( count <= 0 )
+    return;
+
+  const size_t i = (size_t)count - 1;
+
+  if ( terminated[i] )
+    return; // a real termination has no future to bootstrap from
+
+  rewards   [i] += gamma * next_state_value;
+  terminated[i] = 1;
+}
+
 void RolloutBuffer::normalizeAdvantages()
 {
   if ( count < 2 )

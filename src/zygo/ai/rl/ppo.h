@@ -166,7 +166,8 @@ public:
   // The environment cannot simply be reset behind the trainer's back: the trainer caches the current observation,
   // and a reset it does not know about leaves it acting on a state that no longer exists.
   // 
-  // This does both halves - cuts the stored trajectory, then resets the env into the trainer's own observation buffer.
+  // This does both halves - cuts the stored trajectory (bootstrapping it with the value of the state it was cut in),
+  // then resets the env into the trainer's own observation buffer.
   void resetEpisode();
 
   //

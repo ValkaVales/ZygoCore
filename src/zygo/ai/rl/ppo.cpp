@@ -200,13 +200,23 @@ bool PpoTrainer::stepOnce()
 
   buffer.add( obs.data(), action.data(), log_prob, value, sr.reward, sr.terminated, sr.truncated );
 
+  // A time limit is not a failure: the state the robot was cut in still has a future, and its value must be taken NOW.
+  // After the reset below, the next stored value belongs to the first state of ANOTHER episode - a different terrain, a different start -
+  // and GAE used to bootstrap the cut from exactly that. See RolloutBuffer::bootstrapLastStep().
+  if ( sr.truncated && !sr.terminated )
+  {
+    net.forward( next_obs.data(), false, false );
+    buffer.bootstrapLastStep( net.value(), config.gamma );
+  }
+
   for ( int i = 0; i < env.obsSize(); ++i )
     obs[(size_t)i] = next_obs[(size_t)i];
 
   if ( buffer.isFull() )
   {
     // V(s') for the bootstrap must be taken BEFORE any reset.
-    if ( sr.terminated )
+    // A bootstrapped cut is stored as terminated: its future is already inside its reward.
+    if ( buffer.isTerminated( buffer.size() - 1 ) )
       bootstrap_value = REAL_ZERO;
     else
     {
@@ -430,7 +440,13 @@ void PpoTrainer::update()
 
 void PpoTrainer::resetEpisode()
 {
-  buffer.markLastTruncated();
+  // The last stored step led to obs - the state the episode is being cut in. Same treatment as a time limit.
+  // (If that step already ended its episode, it is marked terminated and bootstrapLastStep() leaves it alone.)
+  if ( buffer.size() > 0 )
+  {
+    net.forward( obs.data(), false, false );
+    buffer.bootstrapLastStep( net.value(), config.gamma );
+  }
 
   cur_episode_return = REAL_ZERO;
   cur_episode_length = 0;

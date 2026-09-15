@@ -146,6 +146,7 @@
     <ClCompile Include="src\zygo\ai\nn\net.cpp" />
     <ClCompile Include="src\zygo\ai\nn\optimizer.cpp" />
     <ClCompile Include="src\zygo\ai\nn\running_normalizer.cpp" />
+    <ClCompile Include="src\zygo\ai\rl\parallel_ppo.cpp" />
     <ClCompile Include="src\zygo\ai\rl\ppo.cpp" />
     <ClCompile Include="src\zygo\ai\rl\rollout_buffer.cpp" />
     <ClCompile Include="src\zygo\app\sim_clock.cpp" />
@@ -235,6 +236,7 @@
     <ClInclude Include="src\zygo\ai\nn\optimizer.h" />
     <ClInclude Include="src\zygo\ai\nn\running_normalizer.h" />
     <ClInclude Include="src\zygo\ai\rl\environment.h" />
+    <ClInclude Include="src\zygo\ai\rl\parallel_ppo.h" />
     <ClInclude Include="src\zygo\ai\rl\ppo.h" />
     <ClInclude Include="src\zygo\ai\rl\rollout_buffer.h" />
     <ClInclude Include="src\zygo\app\sim_clock.h" />

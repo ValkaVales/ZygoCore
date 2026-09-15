@@ -79,6 +79,14 @@ public:
   // Without it GAE happily continues the recursion across the cut and mixes two unrelated trajectories into one advantage estimate.
   void markLastTruncated();
 
+  // Ends the most recent step at a CUT that is not a real termination (a time limit, a reset from outside), and does it exactly:
+  // the reward absorbs gamma * V(next state) and the step is marked terminated.
+  //
+  // markLastTruncated() stops the recursion but leaves v_next = values[i + 1], which is the value of the FIRST state of the next episode -
+  // after an automatic reset that is a different robot on a different terrain. Folding the true bootstrap into the reward avoids needing it later.
+  // (The same trick rsl_rl uses for time-outs.)
+  void bootstrapLastStep( Real next_state_value, Real gamma );
+
   //
   void normalizeAdvantages();
 
