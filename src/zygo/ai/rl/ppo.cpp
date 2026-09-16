@@ -24,7 +24,28 @@ PpoConfig::PpoConfig()
   , learning_rate       ( (Real)3e-4 )
   , normalize_advantage ( true )
   , target_kl           ( (Real)0.02 )
+  , desired_kl          ( REAL_ZERO )
+  , adaptive_lr_factor  ( (Real)1.5 )
+  , adaptive_lr_min     ( (Real)1e-6 )
+  , adaptive_lr_max     ( (Real)1e-2 )
 {
+}
+
+Real adaptiveLearningRate( PpoConfig const& config, Real lr, Real update_kl )
+{
+  if ( config.desired_kl <= REAL_ZERO )
+    return lr;
+
+  if ( update_kl > config.desired_kl * (Real)2 )
+    lr /= config.adaptive_lr_factor;
+  else
+  if ( update_kl < config.desired_kl * REAL_HALF )
+    lr *= config.adaptive_lr_factor;
+
+  if ( lr < config.adaptive_lr_min ) lr = config.adaptive_lr_min;
+  if ( lr > config.adaptive_lr_max ) lr = config.adaptive_lr_max;
+
+  return lr;
 }
 
 PpoStats::PpoStats()
@@ -38,6 +59,7 @@ PpoStats::PpoStats()
   , mean_episode_length ( REAL_ZERO )
   , episodes_finished   ( 0 )
   , total_env_steps     ( 0 )
+  , learning_rate       ( REAL_ZERO )
 {
 }
 
@@ -336,6 +358,7 @@ void PpoTrainer::update()
   int  samples_seen    = 0;
 
   bool stop = false;
+  Real last_epoch_kl = REAL_ZERO; // how far the policy has moved from the rollout policy by the end of the update
 
   for ( int epoch = 0; epoch < config.epochs && !stop; ++epoch )
   {
@@ -420,6 +443,9 @@ void PpoTrainer::update()
       optimizer.step();
     }
 
+    if ( epoch_n > 0 )
+      last_epoch_kl = epoch_kl / (Real)epoch_n;
+
     if ( config.target_kl > REAL_ZERO && epoch_n > 0 )
     {
       if ( epoch_kl / (Real)epoch_n > config.target_kl )
@@ -435,6 +461,10 @@ void PpoTrainer::update()
   last_stats.approx_kl     = sum_kl          * inv;
   last_stats.clip_fraction = sum_clipped     * inv;
   last_stats.grad_norm     = last_grad_norm;
+
+  // After the update, for the next one - see PpoConfig::desired_kl.
+  optimizer.setLearningRate( adaptiveLearningRate( config, optimizer.learningRate(), last_epoch_kl ) );
+  last_stats.learning_rate = optimizer.learningRate();
 }
 
 

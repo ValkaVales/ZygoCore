@@ -530,6 +530,7 @@ void ParallelPpoTrainer::update()
   Real   last_grad_norm = REAL_ZERO;
 
   bool stop = false;
+  double last_epoch_kl = 0.0;
 
   for ( int epoch = 0; epoch < config.epochs && !stop; ++epoch )
   {
@@ -593,6 +594,9 @@ void ParallelPpoTrainer::update()
       optimizer.step();
     }
 
+    if ( epoch_n > 0 )
+      last_epoch_kl = epoch_kl / (double)epoch_n;
+
     if ( config.target_kl > REAL_ZERO && epoch_n > 0 && epoch_kl / (double)epoch_n > config.target_kl )
       stop = true; // the policy has moved far enough for one rollout
   }
@@ -605,6 +609,10 @@ void ParallelPpoTrainer::update()
   last_stats.approx_kl     = (Real)( sum_kl          * inv );
   last_stats.clip_fraction = (Real)( sum_clipped     * inv );
   last_stats.grad_norm     = last_grad_norm;
+
+  // After the update, for the next one - see PpoConfig::desired_kl.
+  optimizer.setLearningRate( adaptiveLearningRate( config, optimizer.learningRate(), (Real)last_epoch_kl ) );
+  last_stats.learning_rate = optimizer.learningRate();
 
   // ---- the normalizer learns from this rollout only now, AFTER the update (see the header)
   RunningNormalizer& normalizer = net.observationNormalizer();

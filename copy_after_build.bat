@@ -9,7 +9,7 @@ rem set DEST=D:\VS\TestPID
 rem set DEST=D:\VS\PhysRigidBody
 rem set DEST=D:\VS\_NeuroBook\NeuroBook00_COPY
 rem set DEST=D:\VS\TestCartPole
-set DEST=D:\VS\_TestsFromClaude\TestRobotConsole
+set DEST=D:\VS\_TestsFromClaude\TestRobotPPO
 
 
 rem set DEST=D:\VS\FlyingModels

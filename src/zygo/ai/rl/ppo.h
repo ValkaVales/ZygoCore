@@ -70,8 +70,35 @@ struct PpoConfig
   // The single most useful safety net when the learning rate is slightly too high. <= 0 disables.
   Real target_kl;
 
+  // Adaptive learning rate. <= 0 disables, and learning_rate stays fixed.
+  //
+  // When enabled, learning_rate is only the starting value. After every UPDATE, from how far the policy has moved away from the rollout
+  // policy by the end of it (the mean KL of the last epoch):
+  //
+  //   KL > 2 * desired_kl   ->  lr /= adaptive_lr_factor   (moved too far)
+  //   KL < desired_kl / 2   ->  lr *= adaptive_lr_factor   (barely moved)
+  //
+  // clamped to [adaptive_lr_min, adaptive_lr_max]. A starting value off by 10x is corrected in ~6 updates.
+  //
+  // Why once per update and not after every minibatch, as rsl_rl does: the KL is measured against the ROLLOUT policy, so within an update
+  // it only grows - from exactly 0 on the first minibatch. With 80 minibatches per update (5 epochs x 16) the per-minibatch rule was measured
+  // to multiply the rate by 1.5 on every early minibatch, reach ~2e-4 by the end of the first epoch, overshoot the KL, and crash back to the
+  // floor within the same update: a sawtooth over two orders of magnitude instead of a rate.
+  //
+  // Keep target_kl ABOVE desired_kl (2-3x): the early stop still catches a single update that runs away before the rate has adapted.
+  //
+  // The KL of a Gaussian policy grows like (change of the mean / sigma)^2, so a narrow policy needs a small rate: the quadruped starts at
+  // sigma = exp(-1.6) = 0.2 and reaches KL ~0.02 within ONE epoch at lr = 1e-4. Hence the low default floor.
+  Real desired_kl;
+  Real adaptive_lr_factor;
+  Real adaptive_lr_min;
+  Real adaptive_lr_max;
+
   PpoConfig();
 };
+
+// One step of the schedule above. Returns lr unchanged when desired_kl <= 0.
+Real adaptiveLearningRate( PpoConfig const& config, Real lr, Real update_kl );
 
 
 struct PpoStats
@@ -86,6 +113,7 @@ struct PpoStats
   Real mean_episode_length;
   int  episodes_finished;
   long long total_env_steps;
+  Real learning_rate; // after the update - moves when PpoConfig::desired_kl > 0
 
   PpoStats();
 };
