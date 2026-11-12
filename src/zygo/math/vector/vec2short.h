@@ -54,4 +54,9 @@ public:
   i16 operator ^ ( Vector2Short const & v ) const;
 };
 
+
+using Vector2i = Vector2Short;
+
+extern Vector2i g_zero_point2i;
+
 } // namespace zygo

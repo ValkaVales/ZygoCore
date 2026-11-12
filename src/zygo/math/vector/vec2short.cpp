@@ -4,6 +4,9 @@
 
 namespace zygo {
 
+Vector2i g_zero_point2i;
+
+
 Vector2Short::Vector2Short()
   : x ( 0 )
   , y ( 0 )

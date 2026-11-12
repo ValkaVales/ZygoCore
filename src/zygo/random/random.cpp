@@ -5,7 +5,7 @@
 namespace zygo {
 
 
-// splitmix64 Ч стандартный способ развернуть один сид в полное состо€ние
+// splitmix64 вАФ a standard way to expand a single seed into a full state
 static u64 splitmix64( u64& x )
 {
   u64 z = (x += 0x9E3779B97F4A7C15ULL);
@@ -24,7 +24,7 @@ void Random::seed( u64 v )
 }
 
 
-// пол€рный метод ћарсальи: гауссиана без sin/cos, оба значени€ в дело
+// Marsaglia polar method: a Gaussian generator without sin/cos, with both values put to use
 Real Random::gauss( Real mean, Real sigma )
 {
   if ( sigma <= REAL_ZERO )

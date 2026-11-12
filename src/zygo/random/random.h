@@ -43,7 +43,7 @@ public:
     return result;
   }
 
-  // равномерное в [0, 1): старшие 53 бита -> вся мантисса double
+  // uniformly distributed in [0, 1): the top 53 bits -> the entire mantissa of a double
   static inline Real rand01()
   {
     return (Real)(next() >> 11) * (Real)(1.0 / 9007199254740992.0); // 2^-53
@@ -54,10 +54,15 @@ public:
     return from + (to - from) * rand01();
   }
 
-  // целое в [0, to) без модуло-биаса (метод Лемира, упрощённый)
+  // an integer in [0, to) without modulo bias (Lemire's method, simplified)
   static inline u32 randInt( u32 to )
   {
     return (u32)(((u64)(u32)(next() >> 32) * to) >> 32);
+  }
+
+  static inline u16 randWord( u16 to )
+  {
+    return (u16)(((u64)(u32)(next() >> 32) * to) >> 32);
   }
 
   static Real  gauss( Real mean, Real sigma );
