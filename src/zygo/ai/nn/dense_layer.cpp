@@ -4,7 +4,7 @@
 #include <zygo/core/io/byte_reader.h>
 #include <zygo/core/io/byte_writer.h>
 #include <zygo/random/random.h>
-#include <zygo/debug/print_matrix.h>
+#include <zygo/dbg/print_matrix.h>
 #include <cmath>
 
 
